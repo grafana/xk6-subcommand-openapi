@@ -8,6 +8,10 @@ This is a `k6` extension that will add a subcommand for generating a k6 test cli
 
 Early stage. This repository currently has no functional code. Development follows a spec-first process: a change is proposed, reviewed, and only then implemented. Proposals and specs live under [`openspec/`](openspec/). See [AGENTS.md](AGENTS.md) for the guardrails this implies.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how a change gets proposed, reviewed, and implemented.
+
 ## License
 
 AGPL-3.0. See [LICENSE.md](LICENSE.md).

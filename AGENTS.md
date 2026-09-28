@@ -16,6 +16,8 @@ This project follows spec-driven development. Do not add implementation Go code 
 
 Specs and changes live under `openspec/`. Start a change with `/opsx:propose` (Claude Code), `$openspec-propose` (Codex), or `/opsx-propose` (GitHub Copilot). Once a proposal is approved, implement it with the matching apply command. Project context shown to these tools lives in `openspec/config.yaml`.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full PR structure and status tracking.
+
 ## Lint
 
 All generated Go code must pass `make lint` (golangci-lint, configured the same way k6 configures it). Run it before considering any Go code change done.
