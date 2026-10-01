@@ -10,7 +10,7 @@ This project aims for the same overall goal as [`grafana/openapi-to-k6`](https:/
 
 ## Process gate: spec before code
 
-This project follows spec-driven development. Do not add implementation Go code until a spec exists and is approved for that piece of work. There is no Go code in this repository yet, and that is intentional, not an oversight.
+This project follows spec-driven development. Do not add implementation Go code until a spec exists and is approved for that piece of work.
 
 ## OpenSpec workflow
 
@@ -18,6 +18,10 @@ Specs and changes live under `openspec/`. Start a change with `/opsx:propose` (C
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full PR structure and status tracking.
 
-## Lint
+## Checks before a Go change is done
 
-All generated Go code must pass `make lint` (golangci-lint, configured the same way k6 configures it). Run it before considering any Go code change done.
+A Go code change is not done until all of these pass:
+
+- `make test`: the in-process Go tests.
+- `make it`: the integration test against a real k6 binary built with xk6.
+- `make lint`: golangci-lint, configured the same way k6 configures it, plus `xk6 lint`.

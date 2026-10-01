@@ -77,19 +77,21 @@ Rejected because `xk6 test` runs JS test scripts against a module extension and 
 Targets: `help` (default), `build`, `test`, `it`, `lint`, `format`, `clean`.
 - `build`: `xk6 build --with <module>=.`, producing `./k6`.
 - `test`: `go test -count 1 -race -timeout 60s ./...`.
-- `lint`: the existing golangci flow with the k6-ci config and optional `.golangci.patch`, followed by `xk6 lint`.
+- `lint`: the existing golangci flow with the k6-ci config and optional `.golangci.patch`, followed by `xk6 lint --disable versions`.
+`xk6 lint` runs `gosec` and `govulncheck`, so both are developer prerequisites.
+The `versions` check requires a `vX.Y.Z` git tag, so it is disabled until the first release is tagged.
 The k6-ci ref is read from `.github/workflows/all.yml` with the same `grep` the template uses, so Renovate or a manual bump updates CI and local lint together.
 
 ### CI: template caller plus xk6-kafka-style integration workflow
 - `.github/workflows/all.yml`: copy of the template's thin caller of `grafana/k6-ci/.github/workflows/all.yml`, pinned to v0.5.2 by SHA, with `k6-ci-ref` set to the same SHA.
 - `.github/workflows/integration.yml`: modeled on xk6-kafka's `integration.yml`, with the Go version resolved the same way as k6-ci.
 A `configure` job runs `grafana/k6-ci/.github/actions/go-versions` pinned to the same SHA as `all.yml`, as the template's `release.yml` does.
-The `integration` job then runs checkout, `actions/setup-go` with `go-version: ${{ needs.configure.outputs.current }}`, `grafana/setup-xk6` pinned by SHA with a pinned xk6 version, and `make it`.
+The `integration` job then runs checkout, `actions/setup-go` with `go-version: ${{ needs.configure.outputs.current }}`, `grafana/setup-xk6` pinned by SHA with the latest xk6 version, and `make it`.
 This keeps the integration job on the same Go version as the k6-ci jobs.
 Alternative considered: `go-version-file: go.mod`, as in xk6-kafka.
 Rejected because it can diverge from the Go version k6-ci tests with.
 It runs on pull requests, pushes to `main`, tags, and manual dispatch, with `contents: read` permissions.
-Only the xk6 tool version is pinned, not the k6 version.
+Neither the xk6 tool version nor the k6 version is pinned, so a new release of either surfaces incompatibilities early.
 
 ## Risks / Trade-offs
 

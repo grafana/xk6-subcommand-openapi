@@ -33,5 +33,5 @@ None.
 - New files: `go.mod`, `go.sum`, Go sources and tests at the repository root, a `help.md` for command help, `.github/workflows/`.
 - `Makefile` is rewritten; the existing `lint` behavior is kept, but the k6-ci ref is read from the CI workflow instead of being hardcoded.
 - `README.md` and `AGENTS.md` gain developer instructions (build, test, integration test, running the subcommand locally).
-- New dependencies: `go.k6.io/k6/v2` v2.3.0 and `github.com/spf13/cobra`.
-- Developer prerequisites: Go and `xk6` (for `make build` and `make it`).
+- New dependencies: `go.k6.io/k6/v2` v2.3.0 and `github.com/spf13/cobra`, plus `github.com/stretchr/testify` for tests.
+- Developer prerequisites: Go, `xk6` (for `make build`, `make it`, and `make lint`), and `gosec` and `govulncheck` (for `xk6 lint` in `make lint`).
