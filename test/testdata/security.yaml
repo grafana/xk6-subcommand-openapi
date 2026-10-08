@@ -1,0 +1,66 @@
+# Security schemes: types, methods, and requests are unchanged; an operation's own security replaces the
+# document's, and the document's applies otherwise; one warning per scheme that a generated operation references
+# and that callers cannot supply (an API key in the query, an http scheme other than basic, bearer, or digest),
+# in order of scheme name, also if several operations reference it; http scheme names compared case-insensitively;
+# no warning for header and cookie API keys, oauth2, openIdConnect, or unreferenced schemes.
+# Validation warnings: kin-openapi reports the http scheme names signature and Basic as invalid.
+openapi: 3.0.3
+info:
+  title: Security
+  version: 1.0.0
+security:
+  - bearerAuth: []
+  - inheritedKey: []
+paths:
+  /inherited:
+    get:
+      operationId: getInherited
+      responses: { "200": { description: ok } }
+  /own:
+    get:
+      operationId: getOwn
+      security:
+        - queryKey: []
+        - signature: []
+          basicAuth: []
+      responses: { "200": { description: ok } }
+    post:
+      operationId: postOwn
+      security:
+        - queryKey: []
+      responses: { "200": { description: ok } }
+  /suppliable:
+    get:
+      operationId: getSuppliable
+      security:
+        - digestAuth: []
+          upperBasic: []
+          headerKey: []
+          cookieKey: []
+        - oauth: [read]
+        - oidc: []
+      responses: { "200": { description: ok } }
+  /public:
+    get:
+      operationId: getPublic
+      security: []
+      responses: { "200": { description: ok } }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+    basicAuth: { type: http, scheme: basic }
+    digestAuth: { type: http, scheme: digest }
+    upperBasic: { type: http, scheme: Basic }
+    signature: { type: http, scheme: signature }
+    inheritedKey: { type: apiKey, in: query, name: key }
+    queryKey: { type: apiKey, in: query, name: api_key }
+    headerKey: { type: apiKey, in: header, name: X-Api-Key }
+    cookieKey: { type: apiKey, in: cookie, name: session }
+    unusedQueryKey: { type: apiKey, in: query, name: unused }
+    oauth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.test/token
+          scopes: { read: Read access }
+    oidc: { type: openIdConnect, openIdConnectUrl: https://auth.example.test/.well-known/openid-configuration }

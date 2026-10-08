@@ -1,0 +1,4 @@
+invalid descriptor: invalid tags: tag "flights": extra sibling fields: [kind summary]
+invalid descriptor: invalid tags: tag "international": extra sibling fields: [kind parent summary]
+invalid descriptor: invalid tags: tag "domestic": extra sibling fields: [kind parent summary]
+invalid descriptor: invalid tags: tag "delays": extra sibling fields: [kind summary]

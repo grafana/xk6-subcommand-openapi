@@ -1,0 +1,156 @@
+# Method arguments: the body member, required only if the request body is required, with the request body's
+# description as its doc comment, and the options argument required only if body is; the schema type for JSON,
+# URL-encoded, and multipart bodies, unknown for a body without a schema, and string | ArrayBuffer for any other
+# media type, including JSON-based ones such as application/merge-patch+json.
+# Request building: application/json preferred, otherwise the first media type in lexicographic order;
+# Content-Type set for JSON, URL-encoded, and other media types, with the boundary for multipart, and not for
+# a media type with a wildcard; a per-field multipart encoding with a warning.
+# Schema types: binary strings as ArrayBuffer | FileData, also in arrays and in composition members,
+# and a referenced schema as the same type for multipart and other uses.
+# Client library file: imports for URL-encoded and multipart bodies (URLSearchParams, FormData, FileData).
+openapi: 3.0.3
+info:
+  title: Request bodies
+  version: 1.0.0
+paths:
+  /pets:
+    post:
+      operationId: createPet
+      parameters:
+        - { name: dryRun, in: query, schema: { type: boolean } }
+      requestBody:
+        required: true
+        description: The pet to create.
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/Pet" }
+          application/x-www-form-urlencoded:
+            schema: { $ref: "#/components/schemas/Pet" }
+          application/json:
+            schema: { $ref: "#/components/schemas/Pet" }
+      responses: { "201": { description: created } }
+  /pets/{petId}:
+    parameters:
+      - { name: petId, in: path, required: true, schema: { type: integer } }
+    put:
+      operationId: updatePet
+      requestBody:
+        content:
+          application/json; charset=utf-8:
+            schema: { $ref: "#/components/schemas/Pet" }
+      responses: { "204": { description: updated } }
+    patch:
+      operationId: patchPet
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: "#/components/schemas/Pet" }
+      responses: { "204": { description: patched } }
+  /pets/import:
+    post:
+      operationId: importPet
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/Pet" }
+      responses: { "201": { description: created } }
+  /pets/search:
+    post:
+      operationId: searchPets
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                tags: { type: array, items: { type: string } }
+                age: { type: integer }
+      responses: { "200": { description: ok } }
+  /photos:
+    post:
+      operationId: uploadPhoto
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                description: { type: string }
+                file: { type: string, format: binary }
+                thumbnails: { type: array, items: { type: string, format: binary } }
+                metadata: { type: object, properties: { width: { type: integer } } }
+            encoding:
+              file: { contentType: image/png }
+      responses: { "201": { description: created } }
+  /uploads:
+    post:
+      operationId: createUpload
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/Upload" }
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Upload" }
+  /documents:
+    post:
+      operationId: createDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              allOf:
+                - { $ref: "#/components/schemas/Pet" }
+                - type: object
+                  properties:
+                    attachment: { type: string, format: binary }
+      responses: { "201": { description: created } }
+  /notes:
+    post:
+      operationId: createNote
+      requestBody:
+        content:
+          text/plain:
+            schema: { type: string }
+          text/markdown:
+            schema: { type: string }
+      responses: { "201": { description: created } }
+  /blobs:
+    put:
+      operationId: putBlob
+      requestBody:
+        required: true
+        content:
+          "*/*": {}
+      responses: { "204": { description: stored } }
+    post:
+      operationId: postBlob
+      requestBody:
+        content:
+          application/json: {}
+      responses: { "204": { description: stored } }
+components:
+  schemas:
+    Pet:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        tags: { type: array, items: { type: string } }
+    Upload:
+      type: object
+      required: [file]
+      properties:
+        file: { type: string, format: binary }
+        title: { type: string }

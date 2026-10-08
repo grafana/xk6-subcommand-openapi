@@ -1,0 +1,8 @@
+{{- /*
+The example script appended with --example: an async default function that constructs the client,
+so callers can add awaited method calls without changing its signature.
+*/}}
+export default async function (): Promise<void> {
+  const client = new {{ .ClassName }}({ baseUrl: {{ str .BaseURL }} });
+  // Call the client's methods with await, for example: const result = await client.<method>(...);
+}

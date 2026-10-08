@@ -1,0 +1,9 @@
+invalid descriptor: invalid paths: operation GET /copies/{copyId}/of/{copyId}/{}/{unclosed must define exactly all path parameters (missing: [])
+the path of GET /copies/{copyId}/of/{copyId}/{}/{unclosed has the placeholder {} without a path parameter; it is passed as a string
+the path of GET /files/`${x}/$/{name} has the placeholder {x} without a path parameter; it is passed as a string
+the query parameter "ids" of GET /pets declares a serialization other than style "form" with explode; it is serialized with style "form" and explode
+the cookie parameter "jar" of GET /pets is skipped; send it through the cookies of k6Params
+the query parameter "tags" of GET /pets declares a serialization other than style "form" with explode; it is serialized with style "form" and explode
+the cookie parameter "session" of GET /pets/{pet-id} is skipped; send it through the cookies of k6Params
+the path of GET /stores/{storeId}/{default}/{url}/{1st}/{store-id} has the placeholder {storeId} without a path parameter; it is passed as a string
+path argument name "storeId" is already used, so the path parameter "store-id" of GET /stores/{storeId}/{default}/{url}/{1st}/{store-id} is named "storeId2"

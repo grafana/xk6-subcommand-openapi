@@ -1,0 +1,2 @@
+invalid descriptor: invalid paths: invalid path /pets/{petId}: invalid operation GET: path parameter "petId" must be required
+invalid descriptor: invalid paths: invalid path /pets/{petId}: invalid operation GET: invalid example: string doesn't match the regular expression "^[a-z]+$" Schema: { "example": "123", "pattern": "^[a-z]+$", "type": "string" } Value: "123"

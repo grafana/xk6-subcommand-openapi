@@ -1,0 +1,1 @@
+the request body of POST /photos declares a per-field encoding, which is ignored

@@ -1,0 +1,53 @@
+# Client library file: header comment with title, version, and description, and the imports
+# for operations with query parameters (URL and URLSearchParams, but not FormData).
+# Client class: named after the title in PascalCase.
+# Deterministic output: operations ordered by path in byte order, then by HTTP method
+# in the order GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE.
+# Client methods: doc comments from summary and description, and names from operationId in camelCase.
+openapi: 3.0.3
+info:
+  title: pet store api
+  version: 1.2.0
+  description: A store that sells pets.
+paths:
+  /pets:
+    trace:
+      operationId: tracePets
+      responses: { "200": { description: ok } }
+    patch:
+      operationId: patchPets
+      responses: { "200": { description: ok } }
+    head:
+      operationId: headPets
+      responses: { "200": { description: ok } }
+    options:
+      operationId: optionsPets
+      responses: { "200": { description: ok } }
+    delete:
+      operationId: deletePets
+      responses: { "200": { description: ok } }
+    post:
+      operationId: create_pet
+      summary: Create a pet
+      responses: { "201": { description: created } }
+    put:
+      operationId: PutPets
+      description: Replaces all pets.
+      responses: { "200": { description: ok } }
+    get:
+      operationId: list-pets
+      summary: List pets
+      description: |
+        Returns all pets.
+        Comment terminators */ stay inside the comment.
+      parameters:
+        - { name: limit, in: query, schema: { type: integer } }
+      responses: { "200": { description: ok } }
+  /owners:
+    get:
+      operationId: listOwners
+      responses: { "200": { description: ok } }
+  /Zoos:
+    get:
+      operationId: listZoos
+      responses: { "200": { description: ok } }

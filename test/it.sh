@@ -9,8 +9,7 @@ cd "$(dirname "$0")/.."
 
 dir=build/it
 k6="$dir/k6"
-script="$dir/script.ts"
-want='Hello, World!'
+fixtures=test/testdata
 
 # Do not send k6 usage reports from test runs.
 export K6_NO_USAGE_REPORT=true
@@ -28,25 +27,35 @@ step() {
 }
 
 step "build $k6 with $MODULE"
+rm -rf "$dir"
 mkdir -p "$dir"
-rm -f "$k6" "$script"
 xk6 build --with "$MODULE=." --output "$k6"
 
 step "k6 x --help lists openapi"
 out=$("$k6" x --help 2>&1) || fail "k6 x --help exited with $?" "$out"
 printf '%s\n' "$out" | grep -qw openapi || fail "k6 x --help does not list openapi" "$out"
 
-step "k6 x openapi unused.yaml prints nothing"
-out=$("$k6" x openapi unused.yaml) || fail "k6 x openapi unused.yaml exited with $?" "$out"
-[ -z "$out" ] || fail "k6 x openapi unused.yaml wrote to stdout" "$out"
+# Generate each fixture, including the corpus, with an example script, and run it,
+# which proves that every generated client library loads in k6.
+cases=$(find "$fixtures" -type f \( -name '*.yaml' -o -name '*.json' \) | sort)
+[ -n "$cases" ] || fail "no fixtures found in $fixtures"
 
-step "k6 x openapi unused.yaml --example --out $script"
-out=$("$k6" x openapi unused.yaml --example --out "$script" 2>&1) ||
-	fail "k6 x openapi unused.yaml --example --out $script exited with $?" "$out"
-[ -f "$script" ] || fail "$script was not written" "$out"
+for fixture in $cases; do
+	name=${fixture#"$fixtures"/}
+	script="$dir/${name%.*}.ts"
+	mkdir -p "$(dirname "$script")"
 
-step "k6 run $script logs $want"
-out=$("$k6" run "$script" 2>&1) || fail "k6 run $script exited with $?" "$out"
-printf '%s\n' "$out" | grep -qF "$want" || fail "k6 run $script did not log $want" "$out"
+	step "k6 x openapi $fixture --example --out $script"
+	out=$("$k6" x openapi "$fixture" --example --out "$script" 2>&1) ||
+		fail "k6 x openapi $fixture --example --out $script exited with $?" "$out"
+	[ -s "$script" ] || fail "$script was not written" "$out"
+
+	step "k6 run $script"
+	out=$("$k6" run --quiet --no-usage-report "$script" 2>&1) || fail "k6 run $script exited with $?" "$out"
+	# k6 exits with 0 if the default function throws, and only logs the exception as an error.
+	if printf '%s\n' "$out" | grep -q 'level=error'; then
+		fail "k6 run $script logged an error" "$out"
+	fi
+done
 
 step "PASS"

@@ -1,0 +1,1 @@
+invalid descriptor: invalid paths: invalid path /ping: invalid operation GET: the responses object MUST contain at least one response code

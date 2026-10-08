@@ -1,0 +1,21 @@
+# Security schemes: no warning for an API key in the query that only the document's security references,
+# because every operation replaces it with its own empty security.
+openapi: 3.0.3
+info:
+  title: Security overridden
+  version: 1.0.0
+security:
+  - api_key: []
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      security: []
+      responses: { "200": { description: ok } }
+    post:
+      operationId: createPet
+      security: []
+      responses: { "201": { description: created } }
+components:
+  securitySchemes:
+    api_key: { type: apiKey, in: query, name: api_key }

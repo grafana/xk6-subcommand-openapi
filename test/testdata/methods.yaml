@@ -1,0 +1,43 @@
+# Client methods: names from operationId in camelCase, or from the HTTP method and the path,
+# a "_" prefix for a name that starts with a digit, numeric suffixes with a warning for conflicts
+# in operation order, and methods other than the eight standard ones (QUERY and additional operations).
+# Client class: a title without letters or digits gives ApiClient.
+# Client library file: operations without query parameters or form bodies import URL only.
+openapi: 3.2.0
+info:
+  title: "---"
+  version: 1.0.0
+paths:
+  /animals:
+    get:
+      operationId: list-pets
+      responses: { "200": { description: ok } }
+  /pets:
+    get:
+      operationId: listPets
+      responses: { "200": { description: ok } }
+    query:
+      responses: { "200": { description: ok } }
+    additionalOperations:
+      LINK:
+        responses: { "200": { description: ok } }
+      COPY:
+        operationId: listPets
+        responses: { "200": { description: ok } }
+  /pets/{petId}:
+    parameters:
+      - { name: petId, in: path, required: true, schema: { type: integer } }
+    get:
+      operationId: get-pet-by-id
+      responses: { "200": { description: ok } }
+    delete:
+      responses: { "204": { description: deleted } }
+  /pets/{petId}/toys.json:
+    parameters:
+      - { name: petId, in: path, required: true, schema: { type: integer } }
+    get:
+      responses: { "200": { description: ok } }
+  /2fa:
+    post:
+      operationId: 2fa-verify
+      responses: { "200": { description: ok } }

@@ -1,0 +1,1 @@
+invalid descriptor: invalid paths: invalid path /example: invalid operation POST: invalid example: value must be a string Schema: { "example": [ "tag1", "tag2" ], "type": "string" } Value: [ "tag1", "tag2" ]

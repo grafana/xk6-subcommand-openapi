@@ -1,11 +1,8 @@
-package openapi
+package command
 
 import (
-	"bytes"
-	_ "embed"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -14,51 +11,22 @@ import (
 	"go.k6.io/k6/v2/lib/fsext"
 )
 
-//go:embed templates/example.ts
-var exampleScript []byte
-
 // outFilePerm is the permission of a newly created --out file; generated sources are not secret.
 const outFilePerm fs.FileMode = 0o644
 
-// options are the command's argument and flags.
-type options struct {
-	spec    string // path to the OpenAPI descriptor; not read in this version
-	example bool
-	out     string
-}
-
-// run generates the complete output, then writes it to stdout, or to the file at opts.out if it is set.
-// Generating before writing ensures an error never leaves partial output.
-func run(gs *state.GlobalState, stdout io.Writer, opts options) error {
-	data := generate(opts.example)
-
-	if opts.out == "" {
-		_, err := stdout.Write(data)
-		return err
-	}
-
-	path, err := resolveOutPath(gs, opts.out)
-	if err != nil {
+// writeOutput writes data to gs.Stdout if out is empty, and otherwise to path,
+// the --out file out as resolved by resolveOutPath.
+func writeOutput(gs *state.GlobalState, out, path string, data []byte) error {
+	if out == "" {
+		_, err := gs.Stdout.Write(data)
 		return err
 	}
 
 	if err := fsext.WriteFile(gs.FS, path, data, outFilePerm); err != nil {
-		return fmt.Errorf("writing output file %q: %w", opts.out, err)
+		return fmt.Errorf("writing output file %q: %w", out, err)
 	}
 
 	return nil
-}
-
-// generate builds the complete output: the client library, followed by the example script if requested.
-// The client library is empty in this version.
-func generate(example bool) []byte {
-	var out bytes.Buffer
-
-	if example {
-		out.Write(exampleScript)
-	}
-
-	return out.Bytes()
 }
 
 // resolveOutPath validates the --out path and returns it as an absolute path.

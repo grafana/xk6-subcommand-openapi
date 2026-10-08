@@ -33,7 +33,7 @@ See proposal.md for motivation and the specs for the required behavior.
 Use `github.com/getkin/kin-openapi/openapi3` for loading, `$ref` resolution, and validation.
 It supports OpenAPI 3.0 and 3.1, partially 3.2 (including the `QUERY` method and additional operations through `PathItem.Operations()`), JSON and YAML, and external refs.
 Alternative considered: `pb33f/libopenapi`.
-Rejected because kin-openapi's resolved `*openapi3.Schema` graph, with shared pointers for the same `$ref`, maps directly onto the generator's type registry, and its pluggable URI reader is exactly the hook needed for `gs.FS` and timeouts.
+Rejected because kin-openapi's resolved `*openapi3.Schema` graph, with the resolved location of every `$ref`, maps directly onto the generator's type registry, and its pluggable URI reader is exactly the hook needed for `gs.FS` and timeouts.
 
 ### Package layout
 ```text
@@ -41,9 +41,9 @@ register.go                     package openapi: registration only
 internal/command/               cobra command, flags, run, output writing
   command.go, output.go, help.md
 internal/descriptor/            loading, version check, validation
-  descriptor.go, read.go
+  descriptor.go
 internal/tsgen/                 decisions: operations, schema mapping, naming
-  tsgen.go, operations.go, schema.go, names.go
+  tsgen.go, operations.go, results.go, schema.go, names.go
 internal/tsgen/model/           data contract between tsgen and render
   model.go
 internal/tsgen/render/          TypeScript syntax and embedded templates
@@ -52,6 +52,7 @@ internal/tsgen/render/          TypeScript syntax and embedded templates
 test/                           package test: in-process end-to-end tests
   cmd_test.go, load_test.go, golden_test.go
   testdata/<case>.yaml, <case>_client.ts, <case>_warnings.txt
+  testdata/corpus/<name>.yaml|.json, <name>_client.ts, <name>_warnings.txt, README.md
   it.sh
 .gitattributes                  test/testdata/** text eol=lf
 ```
@@ -134,7 +135,7 @@ func Load(ctx context.Context, location string, opts Options) (*openapi3.T, erro
 `Load` works in these steps:
 1. An argument starting with `http://` or `https://` is parsed as a URL.
    Any other argument is a file path, joined with `Cwd` if relative, and converted to a URL path with forward slashes, so relative `$ref`s resolve against the descriptor's directory, not the process's.
-   On Windows, `C:\test\api.yaml` becomes `/C:/test/api.yaml`, as in the file URL `file:///C:/test/api.yaml`; the leading `/` keeps `url.URL.String()` from treating `C:` as a scheme and prefixing `./`.
+   On Windows, `C:\test\api.yaml` becomes `C:/test/api.yaml`, the same form kin-openapi's own `LoadFromFile` uses; no leading `/` is added, because `URIMapCache` only caches paths that `filepath.IsAbs` accepts, and on Windows it rejects `/C:/test/api.yaml`.
 2. The loader is configured with:
 
    ```go
@@ -154,9 +155,10 @@ func Load(ctx context.Context, location string, opts Options) (*openapi3.T, erro
 
 All errors are wrapped with the argument as given by the user, so messages name the descriptor.
 
-`internal/descriptor/read.go` holds `readFromFS`, the `ReadFromURIFunc` for URLs without a host and with an empty or `file` scheme.
-It converts the URL path back to a file path (stripping the leading `/` before a drive letter, then `filepath.FromSlash`) and reads it with `fsext.ReadFile`, so local reads stay on k6's filesystem abstraction and in-process tests use the in-memory FS.
+`readFromFS` is the `ReadFromURIFunc` for URLs without a host and with an empty or `file` scheme.
+It converts the URL path back to a file path with `filepath.FromSlash` and reads it with `fsext.ReadFile`, so local reads stay on k6's filesystem abstraction and in-process tests use the in-memory FS.
 It returns `openapi3.ErrURINotSupported` for every other URL.
+A `$ref` written as a file URL with a Windows drive letter, such as `file:///C:/specs/pet.yaml`, is not supported, as in kin-openapi's own `ReadFromFile`; relative refs work on every platform.
 
 ### Version check after loading
 kin-openapi v0.149.0 loads a Swagger 2.0 document and an `openapi: "4.0.0"` document without error, so the loaded document is checked:
@@ -192,21 +194,22 @@ type Options struct{ Example bool }
 func Generate(doc *openapi3.T, opts Options, warn func(string)) ([]byte, error)
 ```
 
+`tsgen.go` also builds the `model.File`, sorts the type declarations, computes the feature flags for imports and helpers from the finished methods, and holds the type declarations with their unique names, which the operation and schema mappers share.
 The rest of `tsgen` is split by concern:
-- `operations.go`: operation order, method names, path arguments and segments, the `Options` and `Result` type declarations, request body media type and encoding selection, result unions, and the import and helper flags.
-- `schema.go`: schema to `model.Type` mapping, the type registry keyed by `*openapi3.Schema`, and names for inline types derived from the method name and position.
+- `operations.go`: the operation mapper, with operation order, method names, path arguments and segments, the `Options` type declaration, request body media type and encoding selection, and security scheme warnings.
+- `results.go`: the `Result` type declaration, with the response data types and the success and failure unions.
+- `schema.go`: the schema mapper, with schema to `model.Type` mapping, the named types keyed by location (of a referenced schema, or of the shared response or request body around an inline schema), and names for inline types derived from the method name and position or from the shared component.
 - `names.go`: word splitting, PascalCase and camelCase, reserved words for path arguments, and the name registry that adds numeric suffixes with a warning.
 
 `internal/tsgen/model/model.go` holds exported types and fields only, with no logic beyond the type-union marker method:
 
 ```go
 type File struct {
-	Info    Info       // raw title, description, version
-	Imports Imports    // URLSearchParams, FormData, FileData flags
-	Helpers Helpers    // query, headers, multipart, merge flags
-	Types   []TypeDecl // in output order
-	Client  Client
-	Example *Example   // nil without --example
+	Info     Info       // raw title, description, version
+	Features Features   // methods, query, headers, multipart, FileData flags for imports and helpers
+	Types    []TypeDecl // in output order
+	Client   Client
+	Example  *Example   // nil without --example
 }
 
 type TypeDecl struct {
@@ -245,7 +248,7 @@ type Client struct {
 type Method struct {
 	Name            string
 	HTTPMethod      string
-	Doc             string
+	Doc             []string      // raw paragraphs: summary, description
 	PathArgs        []PathArg     // in path order
 	Path            []PathSegment // literal Text, or a reference to a path Arg
 	Options         Type          // Named reference to the method's Options TypeDecl
@@ -258,6 +261,7 @@ type Method struct {
 
 type PathArg struct {
 	Name string
+	Doc  string // raw description of the path parameter
 	Type Type
 }
 
@@ -278,9 +282,9 @@ A method needs no per-parameter query or header data, because the generated code
 
 Rules for the split:
 - `model` holds neither TypeScript syntax nor `openapi3` types.
-- `render` makes no decisions and emits no warnings; it returns an error on an unknown node, so golden tests fail instead of output going silently wrong.
+- `render` makes no decisions and emits no warnings; its template functions panic on an unknown node, which `Render` returns as an error, so golden tests fail instead of output going silently wrong.
 - If something changes the meaning of a type or a name, `tsgen` decides it; if it only changes how it is spelled, `render` decides it.
-- `tsgen` normalizes enum and `const` values to string, number, boolean, or null, maps anything else to `unknown`, and computes the import and helper flags.
+- `tsgen` normalizes enum and `const` values to string, number, boolean, or null, maps anything else to `unknown`, and computes the feature flags for imports and helpers.
 - `render` is the only place where text from the descriptor becomes TypeScript source.
 - Generated TypeScript uses double quotes everywhere, as Prettier's default and `encoding/json` produce, including in the fixed parts of the templates such as imports.
 
@@ -395,13 +399,23 @@ Alternatives considered:
 
 ### Naming and order
 - Words are split on non-alphanumeric characters and lower-to-upper case transitions, then joined in PascalCase or camelCase.
-- Identifiers that would start with a digit get a `_` prefix; path argument names that are JavaScript reserved words, or that collide with `options`, get a `_` suffix.
+- Identifiers that would start with a digit get a `_` prefix; path argument names that are JavaScript reserved words, or that collide with `options` or with the identifiers the generated method body uses (`http` and the locals `headers`, `query`, `url`, `formData`, `body`, and `response`), get a `_` suffix.
 - Uniqueness is enforced by one name registry for methods and one for types per output: a colliding name gets the next free numeric suffix and a warning.
   The registries cover generated methods and types only; collisions with imported or built-in identifiers and with the client class's own members are not handled (see Risks).
 - Method name suffixes are assigned in operation order, as the `Deterministic output` requirement defines it.
 - Type name suffixes are assigned in discovery order: operations in operation order, and within an operation parameters, then request body, then responses, depth-first.
 - Type declarations are sorted by name in lexicographic byte order, after all names are final.
-- Component and external schemas are keyed in the registry by their resolved `*openapi3.Schema` pointer, not by name, so two different schemas named `Pet` in different documents become `Pet` and `Pet2`, and the same schema reached through different refs is generated once.
+- Referenced schemas, from `components.schemas` or an external document, are keyed in the registry by their resolved location, `SchemaRef.RefPath()`, not by name, so two different schemas named `Pet` in different documents become `Pet` and `Pet2`, and the same schema reached through different refs, including a chain of refs, is generated once.
+  kin-openapi sets the location for every resolved `$ref`, so a missing one breaks an assumption about the library and panics instead of being reported as a problem of the descriptor.
+- The location, not the `*openapi3.Schema` pointer, is the key, because in OpenAPI 3.1 kin-openapi merges the keywords next to a `$ref` into a fresh copy of the referenced schema, so each such use has its own pointer.
+  The type is built from the schema of the first use in discovery order, so it includes the keywords next to the first use and ignores those next to later uses (see Risks).
+  Ignoring a narrowing keyword such as `enum` makes the type at that use wider than the schema, which never rejects a valid value.
+  Alternatives considered: building the type from the original schema in the root document's `components.schemas`, rejected because refs into other documents would still need the first use, and one rule for every ref is simpler; reading kin-openapi's unexported sibling fields with `reflect`, rejected as fragile and still unable to recover the original when every use has siblings; and keeping the widest of several copies, rejected because kin-openapi overwrites fields instead of narrowing, so copies can be incomparable, and it needs a subtype check on model types.
+- An inline schema in a response or request body that is referenced from `components` or another document is keyed by the component's `RefPath()`, plus the media type for a response, because a response has one data type per media type and a request body uses only one.
+  All uses get one type, named after the component followed by `Response` or `Body`, so the name does not depend on which operation comes first.
+  The kind suffix avoids most collisions with `components.schemas`, where a request body and a schema often share a name.
+  Other inline schemas in an operation are reached once and are not keyed.
+  Alternatives considered: one identical type per position, such as `GetPet404` and `DeletePet404`, rejected because shared error responses are common and callers would have to pick one of many names for the same type; and keying by the schema pointer with the name of the first operation, rejected because the name then depends on operation order and misleads other operations.
 - A name is reserved before its body is built, so recursive schemas terminate and reference themselves by name.
 
 ### Escaping
@@ -409,12 +423,14 @@ All escaping lives in `render/syntax.go`:
 - Property names that are not identifiers are quoted.
 - String literals (enum values, `const`, quoted property names, header names) are emitted with `encoding/json`, whose output is a valid JavaScript string literal and escapes U+2028 and U+2029.
 - Path template literals are written as `` `/pets/${encodeURIComponent(String(petId))}` ``, with `\`, `` ` ``, and `${` escaped in literal segments.
-- Comment text is collapsed to one line and `*/` is written as `*\/`.
+- Each text from the descriptor is collapsed to one line in comments, and `*/` is written as `*\/`.
+- A method's doc comment is a multi-line JSDoc block with the summary, the description, and one `@param <argument> <description>` line per described path argument, separated by blank lines; a method with only a summary or only a description gets a single-line doc comment.
+  `@param` uses the generated argument name, so editors attach the description to the argument.
 
 ### Request building in the generated code
 - The request is sent with `await http.asyncRequest(method, url, body, params)`.
 - The URL is built as ``new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}`)``; `URL` comes from jslib.k6.io as specified.
-- Imports are computed by `tsgen` as flags in the model, so the template imports `URLSearchParams` only when some operation has query parameters or a URL-encoded body.
+- Imports and helpers are computed by `tsgen` as feature flags in the model, so the template imports `URLSearchParams` only when some operation has query parameters or a URL-encoded body.
 - Query strings are built by one private helper on the client class, emitted only when an operation needs it: it creates a `URLSearchParams`, appends each array element as its own pair, skips `undefined` and `null`, and appends `?` plus the result only if it is not empty.
   Passing the object to the `URLSearchParams` constructor is not used, because it would serialize arrays as `a,b`.
 - Header arguments go through a second helper that drops `undefined` and `null` and converts values with `String`.
@@ -463,7 +479,7 @@ Alternatives considered:
 
 ### Response decoding by `Content-Type`
 The body is decoded according to what the response declares in its `Content-Type` header, never by trying a parser and falling back when it fails.
-Every client has one private `_decodeBody(response)`, emitted unconditionally because every method uses it:
+A client with at least one method has one private `_decodeBody(response)`, which every method uses:
 1. An empty or absent body (`null`, `""`, or an empty `ArrayBuffer`, as with `responseType: "none"`, status 204, or `HEAD`) gives `undefined`.
 2. The media type is the `Content-Type` value before the first `;`, trimmed and lowercased.
 3. `application/json` and media types ending in `+json` give `response.json()`, which also parses `ArrayBuffer` bodies from `responseType: "binary"`.
@@ -485,7 +501,7 @@ With `--example`, `tsgen` computes the example's base URL and sets `model.Exampl
 `render/templates/example.ts.tmpl` renders an `async` default function that constructs the client with that base URL, so users can add `await client.<method>(...)` calls without changing the function's signature.
 
 ### Tests
-Following the project's preference for end-to-end tests, all Go tests are in package `test` under `test/`, contain only `_test.go` files, and run the command in-process through `command.NewSubcommandWithConfig`:
+Following the project's preference for end-to-end tests, all Go tests except the naming edge-case tests below are in package `test` under `test/`, contain only `_test.go` files, and run the command in-process through `command.NewSubcommandWithConfig`:
 - `cmd_test.go`: help, arguments, output destination, example, and the shared `execute` helper.
   The helper mirrors k6's root command (output writers set to `ts.Stdout` and `ts.Stderr`, usage and errors silenced) and returns `ts.Stdout`, the messages of the warnings logged to `ts.LoggerHook`, and the error.
 - `load_test.go`: loading, load failures, versions, and warnings, with inline fixtures in `ts.FS` and `httptest` servers.
@@ -493,22 +509,27 @@ Following the project's preference for end-to-end tests, all Go tests are in pac
 - `golden_test.go`: the golden test and the determinism check.
 
 Golden test:
-1. For each `test/testdata/<case>.yaml`, read the file from disk, write it into `ts.FS`, and run the command in-process on it.
+1. For each `.yaml` and `.json` file in `test/testdata/` and its subdirectories, read the file from disk, write it into `ts.FS`, and run the command in-process on it.
 2. Compare stdout with `<case>_client.ts` and the logged warning messages, one per line, with `<case>_warnings.txt`, and fail with a diff on any difference.
 3. Only with `go test ./test -run TestGolden -update`, write the current output into the golden files instead of comparing.
    The developer then reviews the change with `git diff`.
 
-The fixtures cover each schema mapping, parameter kind, request body kind, result type shape, naming conflict, recursion, escaping, OpenAPI 3.1, and validation warnings.
+The fixtures in `test/testdata/` cover each schema mapping, parameter kind, request body kind, result type shape, naming conflict, recursion, escaping, OpenAPI 3.1, and validation warnings.
+They are YAML with a comment header naming the requirements they cover.
+`test/testdata/corpus/` adds real-world descriptors copied verbatim: the OpenAPI 3.x examples of the OpenAPI Initiative (CC BY 4.0) in YAML, and the example descriptors of grafana/openapi-to-k6 (AGPL-3.0) in JSON, with their origin and license in its `README.md`.
+The corpus provides the JSON coverage, because JSON allows no comments for the requirement headers, and kin-openapi decodes JSON and YAML with different decoders.
 Every case has a `_warnings.txt`, empty when there are no warnings.
 Disk access goes through `fsext.NewOsFs()`, because forbidigo rejects `os.ReadFile` and `os.WriteFile`, also in tests.
 `.gitattributes` forces LF in `test/testdata/`, because Git on Windows runners checks out text files with CRLF and k6-ci runs `go test` on Windows.
-There are no separate unit tests for naming, type mapping, or rendering, since the golden tests exercise them through the command.
+There are no separate unit tests for type mapping or rendering, since the golden tests exercise them through the command.
+The only unit tests are `internal/tsgen/names_test.go`, a table of naming edge cases (acronyms, digits, separators, non-ASCII letters, reserved argument names) that would otherwise each need a fixture; the naming scenarios of the spec are covered by the golden tests.
 
 `make test` runs `go test ./...` unchanged.
 `make it` runs `test/it.sh`, which:
 1. Builds `build/it/k6` with xk6.
 2. Checks that `k6 x --help` lists `openapi`.
-3. Generates each `test/testdata/<case>.yaml` with `--example --out build/it/<case>.ts` and runs it with `k6 run`, proving that every generated variant loads in k6.
+3. Generates each fixture in `test/testdata/` and `test/testdata/corpus/` with `--example --out build/it/<case>.ts` and runs it with `k6 run`, proving that every generated variant loads in k6.
+   A run fails if k6 exits with a non-zero code or logs an error, because k6 exits with 0 when the default function throws and only logs the exception.
 
 ## Risks / Trade-offs
 
@@ -522,15 +543,59 @@ There are no separate unit tests for naming, type mapping, or rendering, since t
   This is harmless for trusted descriptors, which is the common case, so this change does not restrict access.
   → Decide in a later change whether to restrict it, for example by rejecting `file:` refs when the root descriptor is remote, before the subcommand is recommended for third-party descriptors.
 - [`data` is typed from documented responses only, so an undocumented response, such as a gateway error page or status 0 without a response, gets a wrong type] → Only the type is wrong, never the runtime value; documented in `README.md`. Typing failure data as `unknown` would be honest but would lose the documented error types in the common case.
-- [A caller who forgets `await` gets a `Promise`, whose `ok` is `undefined`, so `if (res.ok)` silently takes the failure branch, and k6 does not type-check scripts] → The examples in `README.md` and `help.md` always use `await`, and editors flag the mistake from the `Promise<...>` return type.
+- [A caller who forgets `await` gets a `Promise`, whose `ok` is `undefined`, so `if (res.ok)` silently takes the failure branch, and k6 does not type-check scripts] → The examples in `README.md` always use `await`, and editors flag the mistake from the `Promise<...>` return type.
 - [A body declared as JSON that does not parse rejects the method's promise, which fails the iteration unless the caller catches it] → Intended, because the server violated its own `Content-Type`; the k6 request metrics are still recorded, and callers who expect such bodies can catch the rejection.
 - [The success flag does not narrow between several success or several error schemas] → Callers check `response.status` or the shape of `data`; a per-status discriminant can be added later as an extra field.
 - [The `FormData` jslib is pinned to `0.0.2`, a pre-1.0 version, and is a second remote import] → It is imported only by clients with multipart bodies, and `make it` checks that such a client loads in k6.
 - [Per-field multipart `encoding` (part content types and headers) is ignored] → A warning is reported; callers needing it can pass `FileData` with a content type.
+- [A binary string maps to `ArrayBuffer | FileData` everywhere, also in JSON bodies and responses, where the runtime value is neither] → Accepted, so that each schema has one type and the schema mapper needs no knowledge of where a schema is used; binary strings are only meaningful in multipart and raw bodies, and raw bodies do not map their schema.
 - [Generated names can collide with identifiers the client library imports or declares itself, for example a schema named `Response` or `Promise`, or an operation named `constructor`] → Accepted as an edge case; a later change can rename or alias them.
 - [Warnings are reported as they are found, so a run that later fails, for example while rendering, still logs the warnings found before] → Acceptable, because warnings go to k6's log and never to the output.
 - [APIs that require an API key in the query, or an `http` scheme other than `basic`, `bearer`, or `digest`, cannot be called through the generated client] → A warning names each such scheme; `README.md` documents how to send credentials through `Params`; support follows in a later change.
+- [The error for an unresolvable `$ref` names only the missing component, for example `Missing`, not the full reference `#/components/schemas/Missing`] → This is caused by a bug in kin-openapi v0.149.0: in `Loader.resolveComponent`, the first lookup builds an error that names the reference, but the retry on a fresh parse of the document runs the same `drill` closure, which assigns to the captured `err` variable and overwrites that error with the bare `map key "Missing" not found`.
+  We cannot work around this without finding the broken reference ourselves, which would duplicate kin-openapi's ref resolution, so the `Unresolvable reference` scenario only requires the error to name the missing component.
+  Once kin-openapi fixes the bug, the scenario can be tightened again to require the full reference.
+- [In OpenAPI 3.1, a named type is built from the first use of its schema, so the keywords next to that use's `$ref` apply to every use: a sibling `description` becomes the type's doc, and a sibling such as `enum` narrows the type everywhere; which use is first depends on discovery order] → Accepted as a known limitation, because kin-openapi v0.149.0 exposes neither the sibling keywords nor the schema without them. Removing it needs kin-openapi to expose the siblings of a `$ref` or to offer a loader option that does not merge them, which can be requested upstream.
+- [`const: null` is ignored, because kin-openapi v0.149.0 stores a missing `const` and `const: null` the same way, as `nil`] → Accepted as a known limitation; such a schema maps by its other keywords.
+- [kin-openapi v0.149.0 validation reports some valid constructs as errors, for example the OpenAPI 3.2 tag fields `kind`, `parent`, and `summary`, and `http` scheme names it does not know or that are not lowercase, such as `Basic`, `Bearer`, or `signature`, so such descriptors produce `invalid descriptor` warnings] → Accepted, because validation only produces warnings and never blocks generation; the corpus golden files record the affected cases.
 - [kin-openapi API changes] → The version is pinned in `go.mod`; breaking changes fail at compile time or in the golden tests.
+
+## Open Questions
+
+**These problems were found during implementation and are not decided yet.**
+**Each one MUST be resolved before this change is archived, either by a decision with its spec, design, and fixture changes, or by recording it as an accepted limitation under Risks.**
+They are tracked as section 6 of the tasks.
+
+### 1. Object query parameters are sent as `[object Object]`
+A query parameter with an object schema, such as `filter` in `test/testdata/schemas.yaml`, is typed correctly as `filter?: { color?: string }`.
+The query helper converts each value with `String(item)`, so `{ filter: { color: "red" } }` is sent as `?filter=%5Bobject+Object%5D`.
+The same helper encodes `application/x-www-form-urlencoded` bodies, so an object field of a form body has the same problem.
+The `Request building` requirement says nothing about object values.
+Options:
+- (a) Serialize objects as OpenAPI's default `style: form` with `explode: true` does, one `name=value` pair per property, so `{ color: "red" }` gives `color=red`, and warn about nested objects and `deepObject`.
+- (b) Keep the current serialization and warn about object-valued query parameters.
+- (c) Document it as a limitation.
+
+Recommendation: (a).
+Still open for (a): whether an object field of a form body is flattened like a query parameter or sent as `JSON.stringify` text like a multipart part.
+Needs a rule in the `Request building` requirement, a note under `Request building in the generated code`, and a fixture case.
+
+### 2. `+json` request bodies are sent raw
+Only `application/json` request bodies are encoded with `JSON.stringify` and typed from their schema.
+Every other media type, including `application/merge-patch+json`, `application/json-patch+json`, and `application/vnd.api+json`, is a raw body typed `string | ArrayBuffer`, as `patchPet` in `test/testdata/request_bodies.yaml` shows, so callers must stringify the body themselves and get no type for its content.
+This is inconsistent with responses, where media types ending in `+json` are parsed as JSON and typed from their schema.
+Related: `updatePet` in the same fixture declares `application/json; charset=utf-8` and is encoded as JSON, but is sent with `Content-Type: application/json`, so the declared `charset` is dropped.
+
+Option: treat `application/json` and media types ending in `+json` as JSON request bodies, typed from the schema, encoded with `JSON.stringify`, and sent with the declared media type as `Content-Type`.
+Still open: whether the declared parameters such as `charset` are kept in the `Content-Type`, which applies to `application/json` too, and whether `application/json` is still preferred over a `+json` media type when a request body offers both.
+Recommendation: do it.
+Needs changes to the `Method arguments` and `Request building` requirements, to the `Media type preference` scenario if the preference changes, and to the design's request body notes.
+
+### 3. Smaller items
+- A single `type: file` gives three warnings, two from validation and one from the generator, and the generator's schema warnings name only the enclosing type, such as "a schema in type Misc", not the property (`test/testdata/schemas_warnings.txt`).
+- The `Schema` fallback name for a referenced schema whose name has no letters or digits, such as `#/components/schemas/---` in `test/testdata/schemas.yaml`, is tested but not specified; the spec only specifies the `ApiClient` fallback for the class name.
+- `*/` is escaped as `*\/` in the `//` header comments too, for example `0.1.0-beta *\/` in `test/testdata/no_operations_client.ts`, although `*/` cannot end a line comment; this follows the `Escaping` rule, which applies to all comments.
+- In a client without operations, `cleanBaseUrl` and `commonK6Params` are never read, so `tsc --noUnusedLocals` reports them (`test/testdata/no_operations_client.ts`); the client passes `tsc --strict`.
 
 ## Migration Plan
 

@@ -4,6 +4,7 @@
 
 Defines the TypeScript client library that `k6 x openapi` generates from an OpenAPI descriptor: its types, its client class and its asynchronous methods, how methods build HTTP requests, and the typed results their promises resolve to.
 The runtime behavior in the `Request building` and `Method result` requirements is not yet verified by running a generated client in k6; that verification follows in a later change.
+**Open problems:** the design's `Open Questions` section lists unresolved problems that can change the `Request building`, `Method arguments`, `Schema types`, and `Warnings` behavior specified here, such as object-valued query parameters and `+json` request bodies; they MUST be resolved before this change is archived.
 The client library imports its runtime dependencies from fixed jslib.k6.io URLs, so running it needs network access to jslib.k6.io; this is an acknowledged limitation that a later change will remove, for example by making the dependencies available offline.
 
 ## ADDED Requirements
@@ -11,7 +12,8 @@ The client library imports its runtime dependencies from fixed jslib.k6.io URLs,
 ### Requirement: Client library file
 The client library SHALL be a single TypeScript module that k6 can run without a build step.
 It SHALL start with a comment stating that the file is generated and must not be edited by hand, followed by the descriptor's `info.title`, `info.description`, and `info.version` when present.
-It SHALL import `http` and the `Params` and `Response` types from `k6/http`, and `URL` from `https://jslib.k6.io/url/1.0.0/index.js`.
+It SHALL import the `Params` type from `k6/http`.
+It SHALL import `http` and the `Response` type from `k6/http`, and `URL` from `https://jslib.k6.io/url/1.0.0/index.js`, if, and only if, the descriptor has at least one operation.
 It SHALL also import `URLSearchParams` from the same module if, and only if, at least one operation has query parameters or an `application/x-www-form-urlencoded` request body.
 It SHALL import `FormData` from `https://jslib.k6.io/formdata/0.0.2/index.js` if, and only if, at least one operation has a `multipart/form-data` request body.
 It SHALL import the `FileData` type from `k6/http` if, and only if, a generated type uses it.
@@ -19,13 +21,17 @@ It SHALL NOT import anything it does not use.
 It SHALL export the generated types and exactly one client class, and SHALL NOT have a default export.
 
 #### Scenario: Header and imports
-- **WHEN** the descriptor has `info.title: Pet Store` and `info.version: 1.2.0`
+- **WHEN** the descriptor has `info.title: Pet Store`, `info.version: 1.2.0`, and at least one operation
 - **THEN** the client library starts with a comment containing `Pet Store` and `1.2.0` and stating that the file is generated
 - **AND** it imports from `k6/http` and from `https://jslib.k6.io/url/1.0.0/index.js`
 
 #### Scenario: Imports without query parameters
-- **WHEN** no operation in the descriptor has query parameters or a URL-encoded or multipart request body
+- **WHEN** the descriptor has operations, but none of them has query parameters or a URL-encoded or multipart request body
 - **THEN** the client library imports `URL` but not `URLSearchParams` or `FormData`
+
+#### Scenario: Imports without operations
+- **WHEN** the descriptor has no operations
+- **THEN** the client library imports only the `Params` type from `k6/http`
 
 #### Scenario: Imports with query parameters
 - **WHEN** at least one operation has a query parameter
@@ -73,7 +79,7 @@ A method SHALL be named after the operation's `operationId` in camelCase, or, if
 If two operations would get the same method name, the later one in operation order SHALL get the suffix `2`, the next one `3`, and so on, and a warning SHALL be reported.
 Method names SHALL be made unique only among the client methods.
 A collision of a method name with a member that the client class declares itself, such as `constructor`, is not handled, and the resulting client library may be invalid.
-A method SHALL carry a doc comment with the operation's `description` and `summary` when present.
+A method SHALL carry a doc comment with the operation's `summary` and `description` when present, as separate paragraphs, and with an `@param` entry for each path argument whose parameter has a description, naming the argument.
 Every method SHALL be an `async` method that returns a `Promise`, as specified in the `Method result` requirement.
 
 #### Scenario: Method from operationId
@@ -83,6 +89,10 @@ Every method SHALL be an `async` method that returns a `Promise`, as specified i
 #### Scenario: Method without operationId
 - **WHEN** the operation `GET /pets/{petId}` has no `operationId`
 - **THEN** the client class has a method `getPetsPetId`
+
+#### Scenario: Method doc comment
+- **WHEN** the operation `GET /pets/{pet-id}` has `summary: Get a pet`, `description: Returns a pet.`, and the path parameter `pet-id` has `description: The pet's ID.`
+- **THEN** the method's doc comment contains `Get a pet` and `Returns a pet.` as separate paragraphs and the line `@param petId The pet's ID.`
 
 #### Scenario: Conflicting method names
 - **WHEN** `GET /pets` has `operationId: listPets` and `GET /animals` has `operationId: list-pets`
@@ -96,6 +106,7 @@ Path arguments SHALL always be required.
 - `query`: an object with one field per query parameter, present only if the operation has query parameters.
 - `headers`: an object with one field per header parameter, present only if the operation has header parameters.
 - `body`: the request body, present only if the operation has a request body.
+  It SHALL be of the type of the request body's schema if the chosen media type is `application/json`, `application/x-www-form-urlencoded`, or `multipart/form-data`, and `string | ArrayBuffer` for any other media type, which the method sends unchanged.
 - `k6Params`: k6 `Params` for this request, always present.
 
 `query` and `headers` SHALL be required members if at least one of their parameters is marked `required`, and optional members otherwise.
@@ -300,26 +311,33 @@ These types describe documented responses only; for an undocumented response, or
 Each schema referenced from `components.schemas` or from an external document SHALL be exported as a named type, named after the schema in PascalCase.
 The schema's name SHALL be the last segment of the reference's JSON pointer, or, for a `$ref` without a fragment such as `pet.yaml`, the referenced file name without its extension.
 Inline object, `allOf`, `oneOf`, and `anyOf` schemas used by parameters, request bodies, or responses SHALL be exported as named types whose names are derived from the method name and their position, for example `GetPetQuery`, `GetPetHeaders`, `CreatePetBody`, and `GetPet200`.
+An inline object or composition schema in a response or request body that operations reference from `components`, or from an external document, SHALL instead be exported as one named type for all uses, named after the response or request body in PascalCase followed by `Response` or `Body`, for example `NotFoundResponse` and `NewPetBody`; a response gets one such type for each JSON media type.
+Inline schemas nested in other schemas, including the members of `allOf`, `oneOf`, and `anyOf`, SHALL be emitted inline and SHALL NOT become named types.
 If two types would get the same name, the later one SHALL get a numeric suffix and a warning SHALL be reported.
 Type names SHALL be made unique only among the generated types.
 A collision of a type name with an identifier that the client library imports or otherwise uses, such as `Response`, `Params`, `Record`, or `Promise`, or with the client class name, is not handled, and the resulting client library may be invalid.
 Only types reachable from the operations SHALL be generated.
 Schemas SHALL map to TypeScript types as follows:
-- `string` maps to `string`, and `string` with `format: binary` to `ArrayBuffer`, or to `ArrayBuffer | FileData` for properties of a `multipart/form-data` request body, so callers can pass `http.file(...)` with a filename and content type.
+- `string` maps to `string`, and `string` with `format: binary` to `ArrayBuffer | FileData` wherever it is used, so callers can pass `http.file(...)` with a filename and content type for a part of a `multipart/form-data` request body.
 - `integer` and `number` map to `number`, and `boolean` maps to `boolean`.
 - `null`, or `nullable: true` in OpenAPI 3.0, adds `null` to the type.
 - A list of types maps to the union of the mapped types.
 - `enum` maps to a union of the literal values, and `const` to the literal value.
 - `array` maps to an array of the mapped `items` type.
 - `object` with `properties` maps to an object type whose properties are optional unless listed in `required`; `additionalProperties` adds an index signature of the mapped type, or `unknown` if it is `true`.
+  Because a TypeScript index signature also covers the named properties, an index signature on an object with properties SHALL be the union of the mapped `additionalProperties` type, the type of each property, and `undefined` if any property is optional, unless it is `unknown`.
 - `object` with neither `properties` nor `additionalProperties` maps to `Record<string, unknown>`.
 - `allOf` maps to the intersection of the mapped types, and `oneOf` and `anyOf` map to their union.
-- A schema without a type, and any construct not listed here, maps to `unknown`, and a warning SHALL be reported for an unrecognized `type` value.
+- A schema without a `type` maps as an `object` if it has `properties` or `additionalProperties` and no `items`, and as an `array` if it has `items` and neither `properties` nor `additionalProperties`.
+  A schema without a `type` that has both maps to `unknown`, and a warning SHALL be reported that its type could not be inferred.
+- Any other schema without a type, and any construct not listed here, maps to `unknown`, and a warning SHALL be reported for an unrecognized `type` value.
 
 Property names that are not valid identifiers SHALL be quoted.
 Recursive schemas SHALL be generated as named types that reference themselves.
+Every reference to the same schema SHALL map to the same named type, even if keywords next to a `$ref`, which OpenAPI 3.1 allows, differ between the references.
+The named type SHALL be built from the first reference in discovery order, including the keywords next to it, and the keywords next to later references SHALL be ignored.
 Descriptions of properties and parameters SHALL be emitted as doc comments.
-Text from the descriptor SHALL be written into comments on a single line and SHALL never end a comment early.
+Each text from the descriptor SHALL be written into comments on a single line and SHALL never end a comment early.
 
 #### Scenario: Component schema
 - **WHEN** a response references `#/components/schemas/pet` with required property `name` of type string and optional property `age` of type integer
@@ -327,11 +345,27 @@ Text from the descriptor SHALL be written into comments on a single line and SHA
 
 #### Scenario: Composition
 - **WHEN** schema `Pet` is `oneOf` `Cat` and `Dog`, and `Cat` is `allOf` `PetBase` and an inline object
-- **THEN** `Pet` is the union of `Cat` and `Dog`, and `Cat` is the intersection of `PetBase` and a named type for the inline object
+- **THEN** `Pet` is the union of `Cat` and `Dog`, and `Cat` is the intersection of `PetBase` and an inline object type
+
+#### Scenario: Shared response component
+- **WHEN** `GET /pets` with `operationId: getPet` and `DELETE /pets` with `operationId: deletePet` both document a `404` response with `$ref: '#/components/responses/NotFound'`, whose schema is an inline object
+- **THEN** the client library exports one type `NotFoundResponse`, the failure data type of both `GetPetResult` and `DeletePetResult` is `NotFoundResponse`, and no warning is reported
+
+#### Scenario: Binary property
+- **WHEN** schema `Upload` has a binary property `file`, and is used both as a `multipart/form-data` request body and as a JSON response
+- **THEN** the client library exports one type `Upload` with the property `file: ArrayBuffer | FileData`, and both uses reference it
 
 #### Scenario: Recursive schema
 - **WHEN** schema `Node` has a property `children` that is an array of `Node`
 - **THEN** the client library exports `type Node` whose `children` property has type `Node[]`, and generation terminates
+
+#### Scenario: Keywords next to a reference
+- **WHEN** in an OpenAPI 3.1 descriptor, schema `Code` is a string, and the properties `billing`, `country`, and `zone` of a schema reference it, `country` with a `description` and `zone` with `enum: [DE, FR]` next to the `$ref`
+- **THEN** all three properties have the type `Code`, `Code` is `string`, and no warning is reported
+
+#### Scenario: Properties with additionalProperties
+- **WHEN** schema `Inventory` has a required property `updatedAt` of type string, an optional property `warehouse` with schema `Warehouse`, and `additionalProperties` of type integer
+- **THEN** `Inventory` has the properties `updatedAt: string` and `warehouse?: Warehouse` and an index signature of type `number | string | Warehouse | undefined`
 
 #### Scenario: Non-identifier property name
 - **WHEN** a schema has a property `content-type`

@@ -57,7 +57,7 @@ On a load failure the subcommand SHALL write nothing to stdout and SHALL NOT cre
 #### Scenario: Unresolvable reference
 - **WHEN** `api.yaml` contains `$ref: '#/components/schemas/Missing'` and no such schema exists
 - **AND** the user runs `k6 x openapi api.yaml`
-- **THEN** the command exits with a non-zero exit code and the error names the reference
+- **THEN** the command exits with a non-zero exit code and the error names the missing component `Missing`
 
 #### Scenario: Load failure leaves the out file unchanged
 - **WHEN** `client.ts` exists with some content

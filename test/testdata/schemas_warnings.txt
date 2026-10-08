@@ -1,0 +1,5 @@
+invalid descriptor: invalid components: schema "Misc": unsupported 'type' value "file"
+invalid descriptor: invalid paths: invalid path /misc: invalid operation GET: unsupported 'type' value "file"
+the type of a schema in type Misc could not be inferred, because it has no type but both object and array keywords; it is mapped to unknown
+schema type "file" in type Misc is not supported and is mapped to unknown
+type name "GetPetResult" is already used, so the schema #/components/schemas/GetPetResult is named "GetPetResult2"

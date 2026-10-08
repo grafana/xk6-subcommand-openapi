@@ -1,0 +1,41 @@
+# Schema types (OpenAPI 3.1): type lists, including null, as unions; the null type; const values,
+# normalized to string, number, boolean, or null literals, and to unknown for other values;
+# enums with null; and keywords next to a $ref: all uses of a schema map to one named type, built from the
+# first use, so the keywords next to later uses, here a deprecated flag, a description, and an enum, are ignored.
+openapi: 3.1.0
+info:
+  title: OpenAPI 3.1
+  version: 1.0.0
+paths:
+  /values:
+    get:
+      operationId: getValues
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Values" }
+components:
+  schemas:
+    Values:
+      type: object
+      properties:
+        nullableString: { type: [string, "null"] }
+        stringOrNumber: { type: [string, integer] }
+        nullOnly: { type: "null" }
+        code: { $ref: "#/components/schemas/Code" }
+        deprecatedCode: { $ref: "#/components/schemas/Code", deprecated: true }
+        narrowedCode: { $ref: "#/components/schemas/Code", enum: [DE, FR] }
+        constString: { const: fixed }
+        constNumber: { const: 1.5 }
+        constBoolean: { const: true }
+        constObject: { const: { a: 1 } }
+        enumWithNull: { enum: [a, null] }
+        arrayOfNullable: { type: array, items: { type: [integer, "null"] } }
+        describedCode:
+          $ref: "#/components/schemas/Code"
+          description: The code of this value.
+    Code:
+      description: An ISO country code.
+      type: string

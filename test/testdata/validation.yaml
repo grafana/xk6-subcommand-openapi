@@ -1,0 +1,19 @@
+# Warnings: a descriptor that loads but fails OpenAPI validation still generates a client, and each validation
+# error is one single-line warning: here an example that does not match its pattern, and a path parameter
+# that is not marked required.
+openapi: 3.0.3
+info:
+  title: Validation
+  version: 1.0.0
+paths:
+  /pets/{petId}:
+    get:
+      operationId: getPet
+      parameters:
+        - { name: petId, in: path, schema: { type: string } }
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { type: string, pattern: "^[a-z]+$", example: "123" }

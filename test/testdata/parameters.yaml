@@ -1,0 +1,91 @@
+# Method arguments: path arguments in template order, named in camelCase and typed from their schemas;
+# Options types with query and headers members, required only if one of their parameters is required,
+# and an options argument that is required only if one of its members is; parameter descriptions as
+# doc comments, and path parameter descriptions as @param lines of the method doc comment;
+# quoted non-identifier names; path-item parameters and operation overrides;
+# undeclared path placeholders and placeholders with clashing names, as string arguments with a warning;
+# reserved words and method locals as argument names; and skipped cookie parameters with a warning.
+# Request building: query serializations other than style form with explode give a warning,
+# and literal path text that needs escaping in a template literal.
+# Path templates: a repeated placeholder is one argument, an empty placeholder is named arg,
+# and a brace without a closing brace is literal text.
+# Warnings for parameters are reported in order of parameter name, across locations.
+openapi: 3.0.3
+info:
+  title: Parameters
+  version: 1.0.0
+paths:
+  /pets/{pet-id}:
+    get:
+      operationId: getPet
+      parameters:
+        - name: pet-id
+          in: path
+          required: true
+          description: The pet's ID.
+          schema: { type: integer }
+        - name: fields
+          in: query
+          description: Fields to return.
+          schema: { type: array, items: { type: string } }
+        - { name: X-Trace, in: header, schema: { type: string } }
+        - { name: session, in: cookie, schema: { type: string } }
+      responses: { "200": { description: ok } }
+  /pets:
+    get:
+      operationId: listPets
+      parameters:
+        - { name: limit, in: query, required: true, schema: { type: integer } }
+        - { name: offset, in: query, schema: { type: integer } }
+        - { name: "page[size]", in: query, schema: { type: integer } }
+        - { name: tags, in: query, style: pipeDelimited, schema: { type: array, items: { type: string } } }
+        - { name: ids, in: query, explode: false, schema: { type: array, items: { type: integer } } }
+        - { name: jar, in: cookie, schema: { type: string } }
+      responses: { "200": { description: ok } }
+  /owners/{ownerId}:
+    parameters:
+      - name: ownerId
+        in: path
+        required: true
+        description: |
+          The owner's name.
+          Not */ the ID.
+        schema: { $ref: "#/components/schemas/OwnerId" }
+      - { name: verbose, in: query, schema: { type: boolean } }
+    get:
+      operationId: getOwner
+      summary: Get an owner
+      description: Returns a single owner.
+      responses: { "200": { description: ok } }
+    delete:
+      operationId: deleteOwner
+      parameters:
+        - { name: verbose, in: query, required: true, schema: { type: string } }
+        - { name: X-Reason, in: header, required: true, schema: { type: string } }
+      responses: { "204": { description: deleted } }
+  /stores/{storeId}/{default}/{url}/{1st}/{store-id}:
+    get:
+      operationId: getStore
+      parameters:
+        - { name: default, in: path, required: true, schema: { type: string } }
+        - { name: url, in: path, required: true, schema: { type: string } }
+        - { name: 1st, in: path, required: true, schema: { type: string } }
+        - { name: store-id, in: path, required: true, schema: { type: number } }
+      responses: { "200": { description: ok } }
+  "/files/`${x}/$/{name}":
+    get:
+      operationId: getFile
+      parameters:
+        - { name: name, in: path, required: true, schema: { type: string } }
+      responses: { "200": { description: ok } }
+  /copies/{copyId}/of/{copyId}/{}/{unclosed:
+    get:
+      operationId: getCopy
+      parameters:
+        - { name: copyId, in: path, required: true, schema: { type: integer } }
+      responses: { "200": { description: ok } }
+components:
+  schemas:
+    OwnerId:
+      type: string
+      enum: [alice, bob]

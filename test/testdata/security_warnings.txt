@@ -1,0 +1,5 @@
+invalid descriptor: invalid components: security scheme "signature": security scheme of type 'http' has invalid 'scheme' value "signature"
+invalid descriptor: invalid components: security scheme "upperBasic": security scheme of type 'http' has invalid 'scheme' value "Basic"
+the security scheme "inheritedKey" sends an API key in the query, which the client cannot send
+the security scheme "queryKey" sends an API key in the query, which the client cannot send
+the security scheme "signature" uses the HTTP authentication scheme "signature", which the client cannot send

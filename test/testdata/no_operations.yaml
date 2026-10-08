@@ -1,0 +1,18 @@
+# Client library file without operations: only the Params type is imported, no helper is emitted,
+# and component schemas that no operation reaches are not generated.
+# Client class: a title that starts with a digit gives a class name prefixed with "_".
+# Escaping: header comment text is written on one line and cannot close a comment.
+openapi: 3.0.3
+info:
+  title: 3D printers
+  version: 0.1.0-beta */
+  description: |
+    Prints things.
+    Ends a comment early? */ No.
+paths: {}
+components:
+  schemas:
+    Unused:
+      type: object
+      properties:
+        name: { type: string }

@@ -1,0 +1,156 @@
+# Schema types (OpenAPI 3.0): component schemas as named types in PascalCase, generated only if an
+# operation reaches them; strings, numbers, integers, booleans, binary strings, enums, arrays, and nullable;
+# objects with required and optional properties, additionalProperties (a schema or true) and index signatures
+# that include the property types; objects without properties; allOf, oneOf, and anyOf with inline members
+# kept inline; nullable compositions, with and without a type; schemas without a type inferred from their keywords, or mapped to unknown with a warning;
+# unsupported types with a warning; recursive schemas; quoted property names; descriptions and comment escaping;
+# inline parameter and response types named after the method; the name Schema for a schema whose name has no
+# letters or digits; type name conflicts with a numeric suffix and a warning, also with a schema named like a
+# generated Options or Result type.
+openapi: 3.0.3
+info:
+  title: Schemas
+  version: 1.0.0
+paths:
+  /pets/{petId}:
+    get:
+      operationId: getPet
+      parameters:
+        - { name: petId, in: path, required: true, schema: { type: integer } }
+        - name: filter
+          in: query
+          schema:
+            type: object
+            properties:
+              color: { type: string }
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pet]
+                properties:
+                  pet: { $ref: "#/components/schemas/pet" }
+                  owner: { type: object, properties: { name: { type: string } } }
+        "404":
+          description: not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GetPetResult" }
+  /inventory:
+    get:
+      operationId: getInventory
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Inventory" }
+  /shapes:
+    get:
+      operationId: listShapes
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Shape" } }
+  /tree:
+    get:
+      operationId: getTree
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Node" }
+  /misc:
+    get:
+      operationId: getMisc
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Misc" }
+components:
+  schemas:
+    pet:
+      description: A pet. Its */ description cannot end the comment.
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, description: "The pet's name,\nover two lines." }
+        age: { type: integer }
+        weight: { type: number, nullable: true }
+        vaccinated: { type: boolean }
+        status: { type: string, enum: [available, sold] }
+        size: { type: integer, enum: [1, 2, 3], nullable: true }
+        photo: { type: string, format: binary }
+        tags: { type: array, items: { type: string } }
+        content-type: { type: string }
+        2nd: { type: string }
+    GetPetResult:
+      description: Conflicts with the Result type of getPet, which is declared first.
+      type: object
+      properties:
+        message: { type: string }
+    Inventory:
+      type: object
+      required: [updatedAt]
+      properties:
+        updatedAt: { type: string }
+        warehouse: { $ref: "#/components/schemas/Warehouse" }
+      additionalProperties: { type: integer }
+    Warehouse:
+      type: object
+      properties:
+        anything: { additionalProperties: true }
+        counts: { type: object, additionalProperties: { type: integer } }
+        empty: { type: object }
+    Shape:
+      oneOf:
+        - { $ref: "#/components/schemas/Circle" }
+        - { $ref: "#/components/schemas/Square" }
+    Circle:
+      allOf:
+        - { $ref: "#/components/schemas/ShapeBase" }
+        - type: object
+          properties:
+            radius: { type: number }
+    Square:
+      anyOf:
+        - { $ref: "#/components/schemas/ShapeBase" }
+        - type: object
+          properties:
+            side: { type: number }
+    ShapeBase:
+      type: object
+      properties:
+        kind: { type: string }
+    Node:
+      type: object
+      properties:
+        value: { type: string }
+        children: { type: array, items: { $ref: "#/components/schemas/Node" } }
+    Misc:
+      type: object
+      properties:
+        inferredObject: { properties: { a: { type: string } } }
+        inferredArray: { items: { type: string } }
+        ambiguous: { properties: { a: { type: string } }, items: { type: string } }
+        untyped: { description: No type and no keywords. }
+        unsupported: { type: file }
+        unnamed: { $ref: "#/components/schemas/---" }
+        nullableAllOf: { nullable: true, allOf: [{ $ref: "#/components/schemas/ShapeBase" }] }
+        nullableOneOf: { nullable: true, oneOf: [{ $ref: "#/components/schemas/Circle" }, { $ref: "#/components/schemas/Square" }] }
+        nullableTypedAllOf: { type: object, nullable: true, allOf: [{ $ref: "#/components/schemas/ShapeBase" }] }
+    "---":
+      type: string
+      enum: [a, b]
+    Unused:
+      type: object
+      properties:
+        never: { type: string }

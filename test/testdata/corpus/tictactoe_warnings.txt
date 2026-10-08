@@ -1,0 +1,2 @@
+invalid descriptor: invalid components: security scheme "basicHttpAuthentication": security scheme of type 'http' has invalid 'scheme' value "Basic"
+invalid descriptor: invalid components: security scheme "bearerHttpAuthentication": security scheme of type 'http' has invalid 'scheme' value "Bearer"

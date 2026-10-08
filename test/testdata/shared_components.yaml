@@ -1,0 +1,40 @@
+# Schema types: an inline schema in a response or request body that operations reference from components becomes
+# one named type for all uses, named after the component followed by Response or Body, also if one operation
+# uses the component twice; a response with several JSON media types gets one type per media type,
+# with a numeric suffix and a warning.
+openapi: 3.0.3
+info:
+  title: Shared components
+  version: 1.0.0
+paths:
+  /pets:
+    get:
+      operationId: getPet
+      responses:
+        "404": { $ref: "#/components/responses/NotFound" }
+        default: { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: createPet
+      requestBody: { $ref: "#/components/requestBodies/NewPet" }
+      responses:
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: replacePet
+      requestBody: { $ref: "#/components/requestBodies/NewPet" }
+      responses:
+        "204": { description: replaced }
+components:
+  requestBodies:
+    NewPet:
+      required: true
+      content:
+        application/json:
+          schema: { type: object, properties: { name: { type: string } } }
+  responses:
+    NotFound:
+      description: not found
+      content:
+        application/json:
+          schema: { type: object, properties: { message: { type: string } } }
+        application/problem+json:
+          schema: { type: object, properties: { title: { type: string } } }
