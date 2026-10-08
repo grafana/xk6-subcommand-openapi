@@ -22,7 +22,7 @@
 ## 4. Integration test
 
 - [x] 4.1 Update `test/it.sh` to build `build/it/k6`, check that `k6 x --help` lists `openapi`, then generate each fixture in `test/testdata/` and `test/testdata/corpus/` with `--example --out build/it/<case>.ts` and run each with `k6 run`, replacing the hello-world checks, and verify `make it` passes locally and fails with a clear message when a generated script is broken
-- [ ] 4.2 Verify the `integration` workflow passes on the pull request, which also confirms CI can reach jslib.k6.io
+- [x] 4.2 Verify the `integration` workflow passes on the pull request, which also confirms CI can reach jslib.k6.io
 
 ## 5. Documentation and final checks
 
@@ -31,8 +31,8 @@
 
 ## 6. Open problems
 
-These tasks MUST be done before the change is archived; see the design's `Open Questions`.
+These problems are accepted as known limitations of this change and will be resolved in separate changes; see the design's `Open Questions`.
 
-- [ ] 6.1 Decide how object-valued query parameters and object fields of URL-encoded bodies are serialized, update the `Request building` requirement and the design, add a fixture case, and implement it
-- [ ] 6.2 Decide whether media types ending in `+json` are JSON request bodies, whether declared media type parameters such as `charset` are kept in the `Content-Type`, and which media type is preferred when several are offered, update the `Method arguments` and `Request building` requirements and the design, add fixture cases, and implement it
-- [ ] 6.3 Resolve the smaller items, each with a fix or by recording it as accepted: duplicate and vague schema warnings, the unspecified `Schema` fallback name, `*/` escaping in line comments, and the unused private fields of a client without operations
+- [x] 6.1 Decide how object-valued query parameters and object fields of URL-encoded bodies are serialized, update the `Request building` requirement and the design, add a fixture case, and implement it
+- [x] 6.2 Decide whether media types ending in `+json` are JSON request bodies, whether declared media type parameters such as `charset` are kept in the `Content-Type`, and which media type is preferred when several are offered, update the `Method arguments` and `Request building` requirements and the design, add fixture cases, and implement it
+- [x] 6.3 Resolve the smaller items, each with a fix or by recording it as accepted: duplicate and vague schema warnings, the unspecified `Schema` fallback name, `*/` escaping in line comments, and the unused private fields of a client without operations

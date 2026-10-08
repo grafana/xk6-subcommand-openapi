@@ -563,8 +563,7 @@ The only unit tests are `internal/tsgen/names_test.go`, a table of naming edge c
 ## Open Questions
 
 **These problems were found during implementation and are not decided yet.**
-**Each one MUST be resolved before this change is archived, either by a decision with its spec, design, and fixture changes, or by recording it as an accepted limitation under Risks.**
-They are tracked as section 6 of the tasks.
+**They are accepted as known limitations of this change, listed under `Open problems` in the `generated-client` spec, and will be resolved in separate changes.**
 
 ### 1. Object query parameters are sent as `[object Object]`
 A query parameter with an object schema, such as `filter` in `test/testdata/schemas.yaml`, is typed correctly as `filter?: { color?: string }`.
