@@ -1,1 +1,3 @@
-test/testdata/** text eol=lf
+# Check out every text file with LF, so files embedded with go:embed, such as the client
+# templates, have the same bytes on every platform, and the generated output with them.
+* text=auto eol=lf
