@@ -10,9 +10,9 @@
 
 ## 3. Warn about nested values
 
-- [ ] 3.1 Keep the declarations of `typeDeclarations` in a map keyed by name, and add the nested-value check from design decision 3 to `internal/tsgen`, run in `paramsMember` and `requestBody` right after the schema is mapped, warning for query parameters and for the fields of URL-encoded bodies that nested values are not supported and are omitted, and verify with the golden warnings of `serialization.yaml` that `filter` in the nested case, `owners`, and `address` in the nested body case get a warning and the non-nested `filter` and `address` cases do not
-- [ ] 3.2 Extend `serialization.yaml` with the edge cases of design decision 3: a recursive schema, a body with `allOf`, a nullable object property, a property typed `unknown`, and a `$ref` to a component schema, regenerate and review the golden files, and verify `make test` passes and each warning in `serialization_warnings.txt` is expected
-- [ ] 3.3 Review the golden warning files of the other fixtures and the corpus for new nested-value warnings, confirm each is correct against the `Request building` requirement, and verify `make test` passes
+- [x] 3.1 Keep the declarations of `typeDeclarations` in a map keyed by name, and add the nested-value check from design decision 3 to `internal/tsgen`, run in `paramsMember` and `requestBody` right after the schema is mapped, warning for query parameters and for the fields of URL-encoded bodies that nested values are not supported and are omitted, and verify with the golden warnings of `serialization.yaml` that `filter` in the nested case, `owners`, and `address` in the nested body case get a warning and the non-nested `filter` and `address` cases do not
+- [x] 3.2 Extend `serialization.yaml` with the edge cases of design decision 3: a recursive schema, a body with `allOf`, a nullable object property, a property typed `unknown`, and a `$ref` to a component schema, regenerate and review the golden files, and verify `make test` passes and each warning in `serialization_warnings.txt` is expected
+- [x] 3.3 Review the golden warning files of the other fixtures and the corpus for new nested-value warnings, confirm each is correct against the `Request building` requirement, and verify `make test` passes
 
 ## 4. Documentation and spec
 

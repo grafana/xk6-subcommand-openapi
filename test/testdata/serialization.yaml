@@ -2,6 +2,8 @@
 # with one fixture operation per scenario of the Request building requirement:
 # arrays as one pair per element, objects flattened into one pair per property, named after the property,
 # and nested objects and arrays omitted with a warning.
+# The nested-value warning sees through references, recursive schemas, allOf, and nullable types,
+# counts objects without properties as objects, and ignores properties typed unknown.
 openapi: 3.0.3
 info:
   title: Serialization
@@ -103,3 +105,77 @@ paths:
                 age: { type: integer }
                 note: { type: string }
       responses: { "200": { description: ok } }
+  /trees:
+    get:
+      operationId: listTrees
+      parameters:
+        # Warns: a recursive schema whose children are objects.
+        - { name: tree, in: query, schema: { $ref: "#/components/schemas/Tree" } }
+        # No warning: a reference to an object with only primitive properties.
+        - { name: label, in: query, schema: { $ref: "#/components/schemas/Label" } }
+        # No warning: a property typed unknown, and additionalProperties without a schema.
+        - name: meta
+          in: query
+          schema:
+            type: object
+            additionalProperties: true
+            properties:
+              extra: {}
+        # No warning: a nullable object with primitive properties.
+        - name: size
+          in: query
+          schema: { type: object, nullable: true, properties: { min: { type: integer } } }
+        # Warns: a nullable object property.
+        - name: owner
+          in: query
+          schema:
+            type: object
+            properties:
+              address: { type: object, nullable: true, properties: { city: { type: string } } }
+        # Warns: an object whose additionalProperties are objects.
+        - name: attributes
+          in: query
+          schema: { type: object, additionalProperties: { type: object } }
+        # Warns: an array of arrays, which was sent as comma-joined text before.
+        - name: matrix
+          in: query
+          schema: { type: array, items: { type: array, items: { type: integer } } }
+        # Warns: a oneOf with a primitive member and an object member with an object property.
+        - name: shape
+          in: query
+          schema:
+            oneOf:
+              - { type: string }
+              - { type: object, properties: { center: { type: object } } }
+      responses: { "200": { description: ok } }
+    post:
+      operationId: createTree
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              allOf:
+                # No warning for the fields of the referenced Label.
+                - { $ref: "#/components/schemas/Label" }
+                # Warns once about address, which two members declare, because its property geo is an object
+                # without properties.
+                - type: object
+                  properties:
+                    address: { type: object, properties: { geo: { type: object } } }
+                - type: object
+                  properties:
+                    address: { type: object, properties: { geo: { type: object } } }
+      responses: { "201": { description: created } }
+components:
+  schemas:
+    Tree:
+      type: object
+      properties:
+        name: { type: string }
+        children: { type: array, items: { $ref: "#/components/schemas/Tree" } }
+    Label:
+      type: object
+      properties:
+        color: { type: string }
+        tags: { type: array, items: { type: string } }

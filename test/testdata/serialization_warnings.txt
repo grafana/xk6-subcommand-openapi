@@ -1,0 +1,9 @@
+the query parameter "filter" of GET /pets/nested allows nested objects or arrays, which are not supported and are omitted
+the field "address" of the request body of POST /pets/nested allows nested objects or arrays, which are not supported and are omitted
+the query parameter "owners" of GET /pets/owners allows nested objects or arrays, which are not supported and are omitted
+the query parameter "attributes" of GET /trees allows nested objects or arrays, which are not supported and are omitted
+the query parameter "matrix" of GET /trees allows nested objects or arrays, which are not supported and are omitted
+the query parameter "owner" of GET /trees allows nested objects or arrays, which are not supported and are omitted
+the query parameter "shape" of GET /trees allows nested objects or arrays, which are not supported and are omitted
+the query parameter "tree" of GET /trees allows nested objects or arrays, which are not supported and are omitted
+the field "address" of the request body of POST /trees allows nested objects or arrays, which are not supported and are omitted

@@ -52,6 +52,31 @@ export type CreatePetResult = {
   response: Response;
 };
 
+export type CreateTreeBody = Label & {
+  address?: {
+    geo?: Record<string, unknown>;
+  };
+} & {
+  address?: {
+    geo?: Record<string, unknown>;
+  };
+};
+
+export type CreateTreeOptions = {
+  body: CreateTreeBody;
+  k6Params?: Params;
+};
+
+export type CreateTreeResult = {
+  data: undefined;
+  ok: true;
+  response: Response;
+} | {
+  data: unknown;
+  ok: false;
+  response: Response;
+};
+
 export type FilterPetsNestedOptions = {
   k6Params?: Params;
   query?: FilterPetsNestedQuery;
@@ -99,6 +124,11 @@ export type FilterPetsResult = {
   response: Response;
 };
 
+export type Label = {
+  color?: string;
+  tags?: string[];
+};
+
 export type ListPetsByOwnersOptions = {
   k6Params?: Params;
   query?: ListPetsByOwnersQuery;
@@ -140,6 +170,45 @@ export type ListPetsResult = {
   response: Response;
 };
 
+export type ListTreesOptions = {
+  k6Params?: Params;
+  query?: ListTreesQuery;
+};
+
+export type ListTreesQuery = {
+  attributes?: {
+    [key: string]: Record<string, unknown>;
+  };
+  label?: Label;
+  matrix?: number[][];
+  meta?: {
+    extra?: unknown;
+    [key: string]: unknown;
+  };
+  owner?: {
+    address?: {
+      city?: string;
+    } | null;
+  };
+  shape?: string | {
+    center?: Record<string, unknown>;
+  };
+  size?: {
+    min?: number;
+  } | null;
+  tree?: Tree;
+};
+
+export type ListTreesResult = {
+  data: undefined;
+  ok: true;
+  response: Response;
+} | {
+  data: unknown;
+  ok: false;
+  response: Response;
+};
+
 export type SearchPetsBody = {
   age?: number;
   name?: string;
@@ -160,6 +229,11 @@ export type SearchPetsResult = {
   data: unknown;
   ok: false;
   response: Response;
+};
+
+export type Tree = {
+  children?: Tree[];
+  name?: string;
 };
 
 export class SerializationClient {
@@ -262,6 +336,33 @@ export class SerializationClient {
       data: this._decodeBody(response),
       response,
     } as SearchPetsResult;
+  }
+
+  async listTrees(options?: ListTreesOptions): Promise<ListTreesResult> {
+    const headers: Record<string, string> = {};
+    const query = this._encodeQuery(options?.query);
+    const url = new URL(this.cleanBaseUrl + `/trees` + (query === "" ? "" : "?" + query));
+    const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      data: this._decodeBody(response),
+      response,
+    } as ListTreesResult;
+  }
+
+  async createTree(options: CreateTreeOptions): Promise<CreateTreeResult> {
+    const headers: Record<string, string> = {};
+    const url = new URL(this.cleanBaseUrl + `/trees`);
+    const body = options?.body === undefined ? undefined : this._encodeQuery(options.body);
+    if (body !== undefined) {
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
+    }
+    const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      data: this._decodeBody(response),
+      response,
+    } as CreateTreeResult;
   }
 
   /**
