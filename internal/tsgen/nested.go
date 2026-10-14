@@ -11,8 +11,8 @@ import (
 // value: an object or array that the query helper omits, because it serializes with style form and explode.
 // objects and arrays tell whether an object or an array is allowed at t's position:
 //
-//	top-level value: objects and arrays; an array element, object property, or index signature is checked below
-//	object property or index signature: arrays; an array element is checked below
+//	top-level value: objects and arrays; an array element, object property, or additional property is checked below
+//	object property or additional property: arrays; an array element is checked below
 //	array element: neither
 //
 // A Record at the top level allows no nested value, because its values are unknown.
@@ -23,7 +23,7 @@ func (d *typeDeclarations) nested(t model.Type, objects, arrays bool) bool {
 		case model.Array:
 			return !arrays || d.nested(m.Elem, false, false)
 		case model.Object:
-			return !objects || (m.Index != nil && d.nested(m.Index, false, true)) ||
+			return !objects || (m.Additional != nil && d.nested(m.Additional, false, true)) ||
 				slices.ContainsFunc(m.Properties, func(p model.Property) bool { return d.nested(p.Type, false, true) })
 		default:
 			return m == model.Record && !objects

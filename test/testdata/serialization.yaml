@@ -167,6 +167,44 @@ paths:
                   properties:
                     address: { type: object, properties: { geo: { type: object } } }
       responses: { "201": { description: created } }
+  /extras:
+    post:
+      operationId: createExtra
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              # Warns about the additional fields: they are objects with an object property.
+              properties:
+                name: { type: string }
+              additionalProperties: { type: object, properties: { geo: { type: object } } }
+      responses: { "201": { description: created } }
+    put:
+      operationId: replaceExtra
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              # Warns only about address: the additional fields are strings.
+              properties:
+                address: { type: object, properties: { geo: { type: object } } }
+              additionalProperties: { type: string }
+      responses: { "204": { description: replaced } }
+    patch:
+      operationId: patchExtra
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              # No warning: the additional fields are objects with primitive properties, which are flattened.
+              additionalProperties: { type: object, properties: { city: { type: string } } }
+      responses: { "204": { description: patched } }
 components:
   schemas:
     Tree:

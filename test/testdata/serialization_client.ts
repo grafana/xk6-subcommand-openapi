@@ -6,6 +6,28 @@ import http from "k6/http";
 import type { Params, Response } from "k6/http";
 import { URL, URLSearchParams } from "https://jslib.k6.io/url/1.0.0/index.js";
 
+export type CreateExtraBody = {
+  name?: string;
+  [key: string]: {
+    geo?: Record<string, unknown>;
+  } | string | undefined;
+};
+
+export type CreateExtraOptions = {
+  body: CreateExtraBody;
+  k6Params?: Params;
+};
+
+export type CreateExtraResult = {
+  data: undefined;
+  ok: true;
+  response: Response;
+} | {
+  data: unknown;
+  ok: false;
+  response: Response;
+};
+
 export type CreatePetBody = {
   address?: {
     city?: string;
@@ -209,6 +231,51 @@ export type ListTreesResult = {
   response: Response;
 };
 
+export type PatchExtraBody = {
+  [key: string]: {
+    city?: string;
+  };
+};
+
+export type PatchExtraOptions = {
+  body: PatchExtraBody;
+  k6Params?: Params;
+};
+
+export type PatchExtraResult = {
+  data: undefined;
+  ok: true;
+  response: Response;
+} | {
+  data: unknown;
+  ok: false;
+  response: Response;
+};
+
+export type ReplaceExtraBody = {
+  address?: {
+    geo?: Record<string, unknown>;
+  };
+  [key: string]: string | {
+    geo?: Record<string, unknown>;
+  } | undefined;
+};
+
+export type ReplaceExtraOptions = {
+  body: ReplaceExtraBody;
+  k6Params?: Params;
+};
+
+export type ReplaceExtraResult = {
+  data: undefined;
+  ok: true;
+  response: Response;
+} | {
+  data: unknown;
+  ok: false;
+  response: Response;
+};
+
 export type SearchPetsBody = {
   age?: number;
   name?: string;
@@ -243,6 +310,51 @@ export class SerializationClient {
   constructor(options: { baseUrl: string; commonK6Params?: Params }) {
     this.cleanBaseUrl = options.baseUrl.replace(/\/+$/, "");
     this.commonK6Params = options.commonK6Params ?? {};
+  }
+
+  async replaceExtra(options: ReplaceExtraOptions): Promise<ReplaceExtraResult> {
+    const headers: Record<string, string> = {};
+    const url = new URL(this.cleanBaseUrl + `/extras`);
+    const body = options?.body === undefined ? undefined : this._encodeQuery(options.body);
+    if (body !== undefined) {
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
+    }
+    const response = await http.asyncRequest("PUT", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      data: this._decodeBody(response),
+      response,
+    } as ReplaceExtraResult;
+  }
+
+  async createExtra(options: CreateExtraOptions): Promise<CreateExtraResult> {
+    const headers: Record<string, string> = {};
+    const url = new URL(this.cleanBaseUrl + `/extras`);
+    const body = options?.body === undefined ? undefined : this._encodeQuery(options.body);
+    if (body !== undefined) {
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
+    }
+    const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      data: this._decodeBody(response),
+      response,
+    } as CreateExtraResult;
+  }
+
+  async patchExtra(options: PatchExtraOptions): Promise<PatchExtraResult> {
+    const headers: Record<string, string> = {};
+    const url = new URL(this.cleanBaseUrl + `/extras`);
+    const body = options?.body === undefined ? undefined : this._encodeQuery(options.body);
+    if (body !== undefined) {
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
+    }
+    const response = await http.asyncRequest("PATCH", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      data: this._decodeBody(response),
+      response,
+    } as PatchExtraResult;
   }
 
   async listPets(options?: ListPetsOptions): Promise<ListPetsResult> {

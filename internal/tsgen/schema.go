@@ -237,9 +237,10 @@ func (m *schemaMapper) object(schema *openapi3.Schema, c schemaCtx) model.Type {
 
 	switch ap := schema.AdditionalProperties; {
 	case ap.Schema != nil:
-		obj.Index = indexType(m.typeOf(ap.Schema, schemaCtx{where: c.where}), obj.Properties)
+		obj.Additional = m.typeOf(ap.Schema, schemaCtx{where: c.where})
+		obj.Index = indexType(obj.Additional, obj.Properties)
 	case ap.Has != nil && *ap.Has:
-		obj.Index = model.Unknown
+		obj.Additional, obj.Index = model.Unknown, model.Unknown
 	}
 
 	if len(obj.Properties) == 0 && obj.Index == nil {

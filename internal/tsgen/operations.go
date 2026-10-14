@@ -361,10 +361,12 @@ func (o *operationMapper) checkQueryStyle(p *openapi3.Parameter, op operation) {
 }
 
 // checkNestedFields warns about each field of the URL-encoded body of type t, described by where,
-// that allows a nested value. The fields are the properties of the object types that t combines,
-// and a field that several of them declare is reported once.
+// that allows a nested value, and once about its additional fields if they allow one.
+// The fields are the properties of the object types that t combines, and a field that several of them
+// declare is reported once.
 func (o *operationMapper) checkNestedFields(t model.Type, where string) {
 	warned := make(map[string]bool)
+	warnedAdditional := false
 
 	for _, m := range o.types.members(t) {
 		obj, ok := m.(model.Object)
@@ -375,14 +377,19 @@ func (o *operationMapper) checkNestedFields(t model.Type, where string) {
 		for _, p := range obj.Properties {
 			if !warned[p.Name] && o.types.nested(p.Type, true, true) {
 				warned[p.Name] = true
-				o.warn(fmt.Sprintf("the field %q of %s %s", p.Name, where, nestedWarning))
+				o.warn(fmt.Sprintf("the field %q of %s allows %s", p.Name, where, nestedWarning))
 			}
+		}
+
+		if !warnedAdditional && obj.Additional != nil && o.types.nested(obj.Additional, true, true) {
+			warnedAdditional = true
+			o.warn(fmt.Sprintf("the additional fields of %s allow %s", where, nestedWarning))
 		}
 	}
 }
 
 // nestedWarning ends the warning about a query parameter or URL-encoded body field that allows a nested value.
-const nestedWarning = "allows nested objects or arrays, which are not supported and are omitted"
+const nestedWarning = "nested objects or arrays, which are not supported and are omitted"
 
 // placeholderPattern matches a placeholder of a path template, such as {petId}, and captures its name.
 var placeholderPattern = regexp.MustCompile(`\{([^}]*)\}`)
@@ -466,7 +473,7 @@ func (o *operationMapper) paramsMember(member, name string, ps []*openapi3.Param
 			typ := o.schemas.typeOf(p.Schema, schemaCtx{where: where})
 
 			if p.In == openapi3.ParameterInQuery && o.types.nested(typ, true, true) {
-				o.warn(fmt.Sprintf("the query parameter %q of %s %s", p.Name, op, nestedWarning))
+				o.warn(fmt.Sprintf("the query parameter %q of %s allows %s", p.Name, op, nestedWarning))
 			}
 
 			fields = append(fields, model.Property{Name: p.Name, Optional: !p.Required, Doc: p.Description, Type: typ})

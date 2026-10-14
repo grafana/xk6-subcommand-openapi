@@ -1,3 +1,5 @@
+the field "address" of the request body of PUT /extras allows nested objects or arrays, which are not supported and are omitted
+the additional fields of the request body of POST /extras allow nested objects or arrays, which are not supported and are omitted
 the query parameter "filter" of GET /pets/nested allows nested objects or arrays, which are not supported and are omitted
 the field "address" of the request body of POST /pets/nested allows nested objects or arrays, which are not supported and are omitted
 the query parameter "owners" of GET /pets/owners allows nested objects or arrays, which are not supported and are omitted
