@@ -54,14 +54,28 @@ export class CallbackExampleClient {
     } as PostStreamsResult;
   }
 
-  /** Encodes values as a query string, with one pair per array element, omitting undefined and null. */
+  /**
+   * Encodes values as a query string with style form and explode: one pair per array element,
+   * and one pair per property of an object, named after the property.
+   * undefined, null, and nested objects and arrays are omitted.
+   */
   private _encodeQuery(values: unknown): string {
     const search = new URLSearchParams();
-    for (const [name, value] of Object.entries((values ?? {}) as Record<string, unknown>)) {
+    const append = (name: string, value: unknown) => {
       for (const item of Array.isArray(value) ? value : [value]) {
-        if (item !== undefined && item !== null) {
+        // Nested objects and arrays are not supported; the generator warns about them.
+        if (item !== undefined && item !== null && typeof item !== "object") {
           search.append(name, String(item));
         }
+      }
+    };
+    for (const [name, value] of Object.entries((values ?? {}) as Record<string, unknown>)) {
+      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+        for (const [key, item] of Object.entries(value)) {
+          append(key, item);
+        }
+      } else {
+        append(name, value);
       }
     }
     return search.toString();

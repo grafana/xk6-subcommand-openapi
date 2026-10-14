@@ -1,0 +1,105 @@
+# Request building: the serialization of query parameters and URL-encoded request body fields,
+# with one fixture operation per scenario of the Request building requirement:
+# arrays as one pair per element, objects flattened into one pair per property, named after the property,
+# and nested objects and arrays omitted with a warning.
+openapi: 3.0.3
+info:
+  title: Serialization
+  version: 1.0.0
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      parameters:
+        - { name: tags, in: query, schema: { type: array, items: { type: string } } }
+        - { name: limit, in: query, schema: { type: integer } }
+      responses: { "200": { description: ok } }
+    post:
+      operationId: createPet
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                address:
+                  type: object
+                  properties:
+                    city: { type: string }
+      responses: { "201": { description: created } }
+  /pets/filtered:
+    get:
+      operationId: filterPets
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: object
+            properties:
+              color: { type: string }
+              size: { type: string }
+              tags: { type: array, items: { type: string } }
+      responses: { "200": { description: ok } }
+  /pets/nested:
+    get:
+      operationId: filterPetsNested
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: object
+            properties:
+              color: { type: string }
+              owner:
+                type: object
+                properties:
+                  name: { type: string }
+      responses: { "200": { description: ok } }
+    post:
+      operationId: createPetNested
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: object
+                  properties:
+                    city: { type: string }
+                    geo:
+                      type: object
+                      properties:
+                        lat: { type: number }
+      responses: { "201": { description: created } }
+  /pets/owners:
+    get:
+      operationId: listPetsByOwners
+      parameters:
+        - name: owners
+          in: query
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                name: { type: string }
+      responses: { "200": { description: ok } }
+  /pets/search:
+    post:
+      operationId: searchPets
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                tags: { type: array, items: { type: string } }
+                age: { type: integer }
+                note: { type: string }
+      responses: { "200": { description: ok } }
