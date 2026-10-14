@@ -16,9 +16,9 @@
 
 ## 4. Documentation and spec
 
-- [ ] 4.1 Update the `query` and `body` items of the method section in `README.md` to describe the flattening of objects and that nested values are not supported, are omitted, and give a warning, and verify the described serialization matches the `Request building` scenarios
-- [ ] 4.2 Remove the object query parameter item from the `Open problems` paragraph in the Purpose of `openspec/specs/generated-client/spec.md`, which the archive step does not sync, and verify `openspec validate serialize-object-query-parameters --strict` passes
+- [x] 4.1 Update the `query` and `body` items of the method section in `README.md` to describe the flattening of objects and that nested values are not supported, are omitted, and give a warning, and verify the described serialization matches the `Request building` scenarios
+- [x] 4.2 Remove the object query parameter item from the `Open problems` paragraph in the Purpose of `openspec/specs/generated-client/spec.md`, which the archive step does not sync, and verify `openspec validate serialize-object-query-parameters --strict` passes
 
 ## 5. Final checks
 
-- [ ] 5.1 Verify `make test`, `make it`, and `make lint` pass without new `.golangci.patch` entries, and `git status` shows no untracked build output
+- [x] 5.1 Verify `make test`, `make it`, and `make lint` pass without new `.golangci.patch` entries, and `git status` shows no untracked build output

@@ -192,8 +192,10 @@ Several calls can run concurrently with `Promise.all`.
 A method takes the path parameters as positional arguments, in path order, followed by an `options` object with these members:
 
 - `query`: the query parameters, sent as a query string, with one `name=value` pair per array element.
+  An object is flattened into one pair per property, named after the property, as OpenAPI's default `style: form` with `explode: true` defines, so `{ filter: { color: "red", tags: ["a", "b"] } }` is sent as `color=red&tags=a&tags=b`.
+  Objects and arrays inside an array or an object property, such as `{ owners: [{ name: "Ann" }] }` or `{ filter: { owner: { name: "Ann" } } }`, are not supported and are omitted; the subcommand logs a warning for each query parameter whose schema allows one.
 - `headers`: the header parameters.
-- `body`: the request body, encoded according to its media type: JSON with `JSON.stringify`, `application/x-www-form-urlencoded` like the query string, `multipart/form-data` as a multipart body whose file fields take `http.file(...)` or an `ArrayBuffer`, and any other media type sent unchanged as a `string` or `ArrayBuffer`.
+- `body`: the request body, encoded according to its media type: JSON with `JSON.stringify`, `application/x-www-form-urlencoded` by the same rules as the query string, with a warning for each field that allows nested values, `multipart/form-data` as a multipart body whose file fields take `http.file(...)` or an `ArrayBuffer`, and any other media type sent unchanged as a `string` or `ArrayBuffer`.
 - `k6Params`: k6 `Params` for this request, merged over `commonK6Params`; `headers`, `cookies`, and `tags` are merged key by key.
 
 A member is required only if the descriptor marks a parameter or the request body as required, and `options` itself is optional if all its members are.

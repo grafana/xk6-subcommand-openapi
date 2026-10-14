@@ -5,7 +5,6 @@ Defines the TypeScript client library that `k6 x openapi` generates from an Open
 The runtime behavior in the `Request building` and `Method result` requirements is not yet verified by running a generated client in k6; that verification follows in a later change.
 The client library imports its runtime dependencies from fixed jslib.k6.io URLs, so running it needs network access to jslib.k6.io; this is an acknowledged limitation that a later change will remove, for example by making the dependencies available offline.
 **Open problems:** these known problems will be resolved in separate changes and can change the `Request building`, `Method arguments`, `Schema types`, and `Warnings` behavior specified here.
-- Object-valued query parameters and object fields of `application/x-www-form-urlencoded` bodies are sent as `[object Object]`.
 - Request bodies with media types ending in `+json` are sent raw and typed `string | ArrayBuffer`, and declared media type parameters such as `charset` are dropped from the `Content-Type`.
 - A single unsupported schema can give several warnings, and schema warnings name only the enclosing type; the `Schema` fallback name for a referenced schema whose name has no letters or digits is not specified; `*/` is also escaped in `//` comments; and a client without operations has private fields that are never read.
 
