@@ -75,7 +75,7 @@ func buildFile(doc *openapi3.T, warn func(string)) *model.File {
 	}
 
 	f.Client.Methods = ops.clientMethods(doc)
-	f.Types = slices.SortedFunc(slices.Values(types.decls), func(a, b model.TypeDecl) int {
+	f.Types = slices.SortedFunc(maps.Values(types.decls), func(a, b model.TypeDecl) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 	f.Features = features(f.Client.Methods, schemas.usesFileData)
@@ -122,11 +122,11 @@ func clientName(info *openapi3.Info) string {
 // so every claimed type name has exactly one declaration.
 type typeDeclarations struct {
 	names *nameRegistry
-	decls []model.TypeDecl // in the order their types are completed
+	decls map[string]model.TypeDecl // by name
 }
 
 func newTypeDeclarations(warn func(string)) *typeDeclarations {
-	return &typeDeclarations{names: newNameRegistry("type", warn)}
+	return &typeDeclarations{names: newNameRegistry("type", warn), decls: make(map[string]model.TypeDecl)}
 }
 
 // declare claims a unique name based on name, builds the type, records the declaration, and returns
@@ -136,7 +136,7 @@ func newTypeDeclarations(warn func(string)) *typeDeclarations {
 func (d *typeDeclarations) declare(name, what, doc string, build func(name string) model.Type) model.Named {
 	name = d.names.claim(name, what)
 	typ := build(name)
-	d.decls = append(d.decls, model.TypeDecl{Name: name, Doc: doc, Type: typ})
+	d.decls[name] = model.TypeDecl{Name: name, Doc: doc, Type: typ}
 
 	return model.Named{Name: name}
 }

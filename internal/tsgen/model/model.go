@@ -83,6 +83,9 @@ type Intersection []Type
 type Object struct {
 	Properties []Property // in output order
 	Index      Type       // the type of an index signature, or nil for none
+	// Additional is the type of additionalProperties, or nil for none. Index also includes
+	// the types of the properties, because a TypeScript index signature covers them.
+	Additional Type
 }
 
 // Property is a property of an Object.

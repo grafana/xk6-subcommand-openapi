@@ -23,7 +23,7 @@ If the request body offers an `application/json` media type, the generator SHALL
 The method SHALL encode `body` according to the chosen media type:
 - `application/json`: `JSON.stringify` of `body`, with `Content-Type: application/json`.
 - `application/x-www-form-urlencoded`: a URL-encoded string that contains the pairs of the fields of `body` by the same rules as the query string, with `Content-Type: application/x-www-form-urlencoded`.
-  The generator SHALL report a warning for each field of the body's schema that allows a nested value, by the same rule as for query parameters.
+  The generator SHALL report a warning for each field of the body's schema that allows a nested value, by the same rule as for query parameters, and one warning for the body's additional fields if its `additionalProperties` schema allows a nested value by that rule.
 - `multipart/form-data`: a multipart body with one part per field of `body`, with `Content-Type: multipart/form-data` and the body's boundary.
   Fields whose value is `undefined` or `null` SHALL be omitted, array values SHALL be sent as one part per element, `FileData` and `ArrayBuffer` values SHALL be sent as file parts, other objects SHALL be sent as their `JSON.stringify` text, and all other values SHALL be converted to strings.
   A request body that declares a per-field `encoding` SHALL be encoded the same way, and a warning SHALL be reported.
@@ -78,6 +78,13 @@ Header parameters and the `Content-Type` set by the method SHALL take precedence
 - **AND** the method is called with the body `{ address: { city: "Berlin", geo: { lat: 52.5 } } }`
 - **THEN** the request body is `city=Berlin`
 - **AND** a warning is reported that names the field `address` and says that nested values are not supported and are omitted
+
+#### Scenario: Nested additional fields of a URL-encoded request body
+- **WHEN** an operation's only request body media type is `application/x-www-form-urlencoded`, and its schema has a string property `name` and an `additionalProperties` schema that is an object with an object property `geo`
+- **AND** the method is called with the body `{ name: "Rex", home: { geo: { lat: 52.5 } } }`
+- **THEN** the request body is `name=Rex`
+- **AND** a warning is reported that names the additional fields of the request body and says that nested values are not supported and are omitted
+- **AND** no warning is reported for `name`
 
 #### Scenario: Multipart request body
 - **WHEN** an operation's only request body media type is `multipart/form-data` with a string property `description` and a binary property `file`
