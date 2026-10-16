@@ -2,7 +2,7 @@
 
 ## 1. Fixture
 
-- [ ] 1.1 Extend `test/testdata/results.yaml` so it covers every scenario of the `Method result` requirement: add a `404` response to `updatePet` for `Narrowing by success` and `Range with explicit codes`, an operation with `200` and `5XX` for `Range without explicit codes`, an operation with `200` and the invalid key `20X` for `Invalid response key`, and an operation whose response uses a component schema named `HttpStatusAll` for `Status code type name in use`, keeping `createPet` with only `201` for `No documented failure`; update the fixture's header comment, regenerate its golden files with `go test ./test -run TestGolden -update`, and verify `make test` passes and `results_client.ts` still has the two-variant Result types with `ok`
+- [x] 1.1 Extend `test/testdata/results.yaml` so it covers every scenario of the `Method result` requirement: add a `404` response to `updatePet` for `Narrowing by success` and `Range with explicit codes`, an operation with `200` and `5XX` for `Range without explicit codes`, an operation with `200` and the invalid key `20X` for `Invalid response key`, and an operation whose response uses a component schema named `HttpStatusAll` for `Status code type name in use`, keeping `createPet` with only `201` for `No documented failure`; update the fixture's header comment, regenerate its golden files with `go test ./test -run TestGolden -update`, and verify `make test` passes and `results_client.ts` still has the two-variant Result types with `ok`
 
 ## 2. Status code types and per-response variants
 

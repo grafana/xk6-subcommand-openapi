@@ -1,9 +1,13 @@
-# Method result: Result types with a success and a failure variant; success data from 2XX and the status codes
-# 200 to 299, failure data from all other responses including 4XX and default; undefined for a response without
-# content, also more than once; the union over a response's media types, with the schema type for application/json
-# and +json media types, unknown for JSON without a schema, and Response["body"] for other media types;
-# only a default response on both sides; unknown for no documented failure and for no documented response at all;
-# inline response schemas named after the method and the status.
+# Method result: one variant per documented response and one for status 0, told apart by status; explicit codes
+# as number literals, ranges as HttpStatus1XX to HttpStatus5XX or, with explicit codes in the range, as a
+# per-method type such as UpdatePetStatus4XX, and default as HttpStatusAll or, next to other responses, as a
+# per-method type such as GetPetStatusDefault; default next to a range excludes the range; range keys compared
+# case-insensitively; several success responses; undefined for a response without content; the union over a
+# response's media types, with the schema type for application/json and +json media types, unknown for JSON
+# without a schema, and Response["body"] for other media types; only a default response; no documented failure;
+# no documented response at all; invalid responses keys skipped with a warning; a component schema named
+# HttpStatusAll, a reserved name, renamed with a numeric suffix and a warning; inline response schemas named
+# after the method and the status.
 openapi: 3.0.3
 info:
   title: Results
@@ -44,13 +48,16 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Job" }
         "204": { description: unchanged }
-        "205": { description: reset }
+        "404":
+          description: not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotFound" }
         4XX:
           description: client error
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/Problem" }
-        "500": { description: server error }
     delete:
       operationId: deletePet
       responses:
@@ -98,6 +105,45 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Pet" }
+  /pets/search:
+    get:
+      operationId: searchPets
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Pet" }
+        20X: { description: not a status code }
+        "600": { description: not a status code }
+  /jobs:
+    get:
+      operationId: getJob
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Job" }
+        5xx:
+          description: server error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        default:
+          description: error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HttpStatusAll" }
   /ping:
     get:
       operationId: ping
@@ -124,3 +170,7 @@ components:
       type: object
       properties:
         title: { type: string }
+    HttpStatusAll:
+      type: object
+      properties:
+        healthy: { type: boolean }

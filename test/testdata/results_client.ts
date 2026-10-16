@@ -42,6 +42,34 @@ export type Error = {
   code?: number;
 };
 
+export type GetHealthOptions = {
+  k6Params?: Params;
+};
+
+export type GetHealthResult = {
+  data: HttpStatusAll;
+  ok: true;
+  response: Response;
+} | {
+  data: unknown;
+  ok: false;
+  response: Response;
+};
+
+export type GetJobOptions = {
+  k6Params?: Params;
+};
+
+export type GetJobResult = {
+  data: Job;
+  ok: true;
+  response: Response;
+} | {
+  data: Problem | Error;
+  ok: false;
+  response: Response;
+};
+
 export type GetPetOptions = {
   k6Params?: Params;
 };
@@ -68,6 +96,10 @@ export type GetPhotoResult = {
   data: unknown;
   ok: false;
   response: Response;
+};
+
+export type HttpStatusAll = {
+  healthy?: boolean;
 };
 
 export type Job = {
@@ -114,6 +146,20 @@ export type Problem = {
   title?: string;
 };
 
+export type SearchPetsOptions = {
+  k6Params?: Params;
+};
+
+export type SearchPetsResult = {
+  data: Pet;
+  ok: true;
+  response: Response;
+} | {
+  data: undefined;
+  ok: false;
+  response: Response;
+};
+
 export type UpdatePetOptions = {
   k6Params?: Params;
 };
@@ -123,7 +169,7 @@ export type UpdatePetResult = {
   ok: true;
   response: Response;
 } | {
-  data: Problem | undefined;
+  data: NotFound | Problem;
   ok: false;
   response: Response;
 };
@@ -135,6 +181,28 @@ export class ResultsClient {
   constructor(options: { baseUrl: string; commonK6Params?: Params }) {
     this.cleanBaseUrl = options.baseUrl.replace(/\/+$/, "");
     this.commonK6Params = options.commonK6Params ?? {};
+  }
+
+  async getHealth(options?: GetHealthOptions): Promise<GetHealthResult> {
+    const headers: Record<string, string> = {};
+    const url = new URL(this.cleanBaseUrl + `/health`);
+    const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      data: this._decodeBody(response),
+      response,
+    } as GetHealthResult;
+  }
+
+  async getJob(options?: GetJobOptions): Promise<GetJobResult> {
+    const headers: Record<string, string> = {};
+    const url = new URL(this.cleanBaseUrl + `/jobs`);
+    const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      data: this._decodeBody(response),
+      response,
+    } as GetJobResult;
   }
 
   async listPets(options?: ListPetsOptions): Promise<ListPetsResult> {
@@ -157,6 +225,17 @@ export class ResultsClient {
       data: this._decodeBody(response),
       response,
     } as CreatePetResult;
+  }
+
+  async searchPets(options?: SearchPetsOptions): Promise<SearchPetsResult> {
+    const headers: Record<string, string> = {};
+    const url = new URL(this.cleanBaseUrl + `/pets/search`);
+    const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      data: this._decodeBody(response),
+      response,
+    } as SearchPetsResult;
   }
 
   async getPet(petId: number, options?: GetPetOptions): Promise<GetPetResult> {
