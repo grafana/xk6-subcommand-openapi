@@ -16,7 +16,8 @@ context: |
   Comparable in goal to grafana/openapi-to-k6, but a new, independent
   implementation, not a port. Not aiming for JS-API or output
   compatibility with openapi-to-k6's generated code.
-  No Node.js dependency anywhere in this project.
+  No Node.js dependency for users: the subcommand runs as part of a k6 binary.
+  Node.js is used only in development and CI, to type-check the generated client libraries.
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
