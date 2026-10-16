@@ -1,1 +1,2 @@
 invalid descriptor: invalid paths: invalid path /ping: invalid operation GET: the responses object MUST contain at least one response code
+type name "HttpStatusAll" is already used, so the schema #/components/schemas/HttpStatusAll is named "HttpStatusAll2"

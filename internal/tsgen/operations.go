@@ -85,6 +85,7 @@ type operationMapper struct {
 	methodNames *nameRegistry
 	types       *typeDeclarations
 	schemas     *schemaMapper
+	statusTypes *statusTypes // nil if the descriptor has no operations
 }
 
 func newOperationMapper(types *typeDeclarations, schemas *schemaMapper, warn func(string)) *operationMapper {
@@ -102,6 +103,11 @@ func (o *operationMapper) clientMethods(doc *openapi3.T) []model.Method {
 	ops := operations(doc)
 	methods := make([]model.Method, 0, len(ops))
 	referenced := make(map[string]bool)
+
+	// The status code types are declared first, so they keep their names.
+	if len(ops) > 0 {
+		o.statusTypes = declareStatusTypes(o.types)
+	}
 
 	for _, op := range ops {
 		methods = append(methods, o.method(op))

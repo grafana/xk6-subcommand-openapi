@@ -42,7 +42,7 @@ type TypeDecl struct {
 	Type Type
 }
 
-// Type is one of Named, Builtin, Literal, Array, Union, Intersection, or Object.
+// Type is one of Named, Builtin, Literal, Array, Union, Intersection, Exclude, or Object.
 type Type interface{ isType() }
 
 // Named references the TypeDecl with this name.
@@ -79,6 +79,12 @@ type Union []Type
 // Intersection is an intersection of its members.
 type Intersection []Type
 
+// Exclude is the members of the union From that are not assignable to Excluded.
+type Exclude struct {
+	From     Type
+	Excluded Type
+}
+
 // Object is an object type.
 type Object struct {
 	Properties []Property // in output order
@@ -102,6 +108,7 @@ func (Literal) isType()      {}
 func (Array) isType()        {}
 func (Union) isType()        {}
 func (Intersection) isType() {}
+func (Exclude) isType()      {}
 func (Object) isType()       {}
 
 // Client is the client class.
