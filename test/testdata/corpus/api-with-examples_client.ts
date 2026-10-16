@@ -12,12 +12,16 @@ export type GetVersionDetailsv2Options = {
 
 export type GetVersionDetailsv2Result = {
   data: unknown;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: unknown;
-  ok: false;
   response: Response;
+  status: 203;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -44,12 +48,16 @@ export type ListVersionsv2Options = {
 
 export type ListVersionsv2Result = {
   data: unknown;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: unknown;
-  ok: false;
   response: Response;
+  status: 300;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 export class SimpleAPIOverviewClient {
@@ -67,7 +75,7 @@ export class SimpleAPIOverviewClient {
     const url = new URL(this.cleanBaseUrl + `/`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListVersionsv2Result;
@@ -79,7 +87,7 @@ export class SimpleAPIOverviewClient {
     const url = new URL(this.cleanBaseUrl + `/v2`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetVersionDetailsv2Result;

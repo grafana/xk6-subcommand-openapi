@@ -15,12 +15,12 @@ export type GetValuesOptions = {
 
 export type GetValuesResult = {
   data: Values;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -71,7 +71,7 @@ export class OpenAPI31Client {
     const url = new URL(this.cleanBaseUrl + `/values`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetValuesResult;

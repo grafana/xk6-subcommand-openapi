@@ -13,13 +13,19 @@ export type CreatePetsOptions = {
 
 export type CreatePetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
   data: Error;
-  ok: false;
   response: Response;
+  status: CreatePetsStatusDefault;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
+
+export type CreatePetsStatusDefault = Exclude<HttpStatusAll, 201>;
 
 export type Error = {
   code: number;
@@ -56,13 +62,19 @@ export type ListPetsQuery = {
 
 export type ListPetsResult = {
   data: Pets;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: Error;
-  ok: false;
   response: Response;
+  status: ListPetsStatusDefault;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
+
+export type ListPetsStatusDefault = Exclude<HttpStatusAll, 200>;
 
 export type Pet = {
   id: number;
@@ -78,13 +90,19 @@ export type ShowPetByIdOptions = {
 
 export type ShowPetByIdResult = {
   data: Pet;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: Error;
-  ok: false;
   response: Response;
+  status: ShowPetByIdStatusDefault;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
+
+export type ShowPetByIdStatusDefault = Exclude<HttpStatusAll, 200>;
 
 export class SwaggerPetstoreClient {
   private readonly cleanBaseUrl: string;
@@ -102,7 +120,7 @@ export class SwaggerPetstoreClient {
     const url = new URL(this.cleanBaseUrl + `/pets` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPetsResult;
@@ -118,7 +136,7 @@ export class SwaggerPetstoreClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreatePetsResult;
@@ -134,7 +152,7 @@ export class SwaggerPetstoreClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ShowPetByIdResult;

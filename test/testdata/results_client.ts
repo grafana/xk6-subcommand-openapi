@@ -12,12 +12,12 @@ export type CreatePetOptions = {
 
 export type CreatePetResult = {
   data: Pet;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type DeletePet409 = {
@@ -30,12 +30,16 @@ export type DeletePetOptions = {
 
 export type DeletePetResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: HttpStatus2XX;
 } | {
   data: DeletePet409;
-  ok: false;
   response: Response;
+  status: 409;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 export type Error = {
@@ -48,12 +52,12 @@ export type GetHealthOptions = {
 
 export type GetHealthResult = {
   data: HttpStatusAll2;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetJobOptions = {
@@ -62,13 +66,23 @@ export type GetJobOptions = {
 
 export type GetJobResult = {
   data: Job;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: Problem | Error;
-  ok: false;
+  data: Problem;
   response: Response;
+  status: HttpStatus5XX;
+} | {
+  data: Error;
+  response: Response;
+  status: GetJobStatusDefault;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
+
+export type GetJobStatusDefault = Exclude<HttpStatusAll, 200 | HttpStatus5XX>;
 
 export type GetPetOptions = {
   k6Params?: Params;
@@ -76,13 +90,23 @@ export type GetPetOptions = {
 
 export type GetPetResult = {
   data: Pet;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: NotFound | Error;
-  ok: false;
+  data: NotFound;
   response: Response;
+  status: 404;
+} | {
+  data: Error;
+  response: Response;
+  status: GetPetStatusDefault;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
+
+export type GetPetStatusDefault = Exclude<HttpStatusAll, 200 | 404>;
 
 export type GetPhotoOptions = {
   k6Params?: Params;
@@ -90,12 +114,16 @@ export type GetPhotoOptions = {
 
 export type GetPhotoResult = {
   data: Pet | Response["body"];
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: unknown;
-  ok: false;
   response: Response;
+  status: 400;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -130,12 +158,12 @@ export type ListPetsOptions = {
 
 export type ListPetsResult = {
   data: Pet;
-  ok: true;
   response: Response;
+  status: HttpStatusAll;
 } | {
-  data: Pet;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type NotFound = {
@@ -151,13 +179,9 @@ export type PingOptions = {
 };
 
 export type PingResult = {
-  data: unknown;
-  ok: true;
+  data: undefined;
   response: Response;
-} | {
-  data: unknown;
-  ok: false;
-  response: Response;
+  status: 0;
 };
 
 export type Problem = {
@@ -170,12 +194,12 @@ export type SearchPetsOptions = {
 
 export type SearchPetsResult = {
   data: Pet;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: undefined;
-  ok: false;
   response: Response;
+  status: 0;
 };
 
 export type UpdatePetOptions = {
@@ -183,14 +207,32 @@ export type UpdatePetOptions = {
 };
 
 export type UpdatePetResult = {
-  data: Pet | Job | undefined;
-  ok: true;
+  data: Pet;
   response: Response;
+  status: 200;
 } | {
-  data: NotFound | Problem;
-  ok: false;
+  data: Job;
   response: Response;
+  status: 202;
+} | {
+  data: undefined;
+  response: Response;
+  status: 204;
+} | {
+  data: NotFound;
+  response: Response;
+  status: 404;
+} | {
+  data: Problem;
+  response: Response;
+  status: UpdatePetStatus4XX;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
+
+export type UpdatePetStatus4XX = Exclude<HttpStatus4XX, 404>;
 
 export class ResultsClient {
   private readonly cleanBaseUrl: string;
@@ -206,7 +248,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/health`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetHealthResult;
@@ -217,7 +259,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/jobs`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetJobResult;
@@ -228,7 +270,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPetsResult;
@@ -239,7 +281,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("POST", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreatePetResult;
@@ -250,7 +292,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/pets/search`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as SearchPetsResult;
@@ -261,7 +303,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPetResult;
@@ -272,7 +314,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}`);
     const response = await http.asyncRequest("PUT", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as UpdatePetResult;
@@ -283,7 +325,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}`);
     const response = await http.asyncRequest("DELETE", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as DeletePetResult;
@@ -294,7 +336,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}/photo`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPhotoResult;
@@ -305,7 +347,7 @@ export class ResultsClient {
     const url = new URL(this.cleanBaseUrl + `/ping`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PingResult;

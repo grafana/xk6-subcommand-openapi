@@ -12,12 +12,12 @@ export type GetPullRequestsByIdOptions = {
 
 export type GetPullRequestsByIdResult = {
   data: Pullrequest;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetPullRequestsByRepositoryOptions = {
@@ -31,12 +31,12 @@ export type GetPullRequestsByRepositoryQuery = {
 
 export type GetPullRequestsByRepositoryResult = {
   data: Pullrequest[];
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetRepositoriesByOwnerOptions = {
@@ -45,12 +45,12 @@ export type GetRepositoriesByOwnerOptions = {
 
 export type GetRepositoriesByOwnerResult = {
   data: Repository[];
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetRepositoryOptions = {
@@ -59,12 +59,12 @@ export type GetRepositoryOptions = {
 
 export type GetRepositoryResult = {
   data: Repository;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetUserByNameOptions = {
@@ -73,12 +73,12 @@ export type GetUserByNameOptions = {
 
 export type GetUserByNameResult = {
   data: User;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -105,12 +105,12 @@ export type MergePullRequestOptions = {
 
 export type MergePullRequestResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type Pullrequest = {
@@ -144,7 +144,7 @@ export class LinkExampleClient {
     const url = new URL(this.cleanBaseUrl + `/2.0/repositories/${encodeURIComponent(String(username))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetRepositoriesByOwnerResult;
@@ -155,7 +155,7 @@ export class LinkExampleClient {
     const url = new URL(this.cleanBaseUrl + `/2.0/repositories/${encodeURIComponent(String(username))}/${encodeURIComponent(String(slug))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetRepositoryResult;
@@ -167,7 +167,7 @@ export class LinkExampleClient {
     const url = new URL(this.cleanBaseUrl + `/2.0/repositories/${encodeURIComponent(String(username))}/${encodeURIComponent(String(slug))}/pullrequests` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPullRequestsByRepositoryResult;
@@ -178,7 +178,7 @@ export class LinkExampleClient {
     const url = new URL(this.cleanBaseUrl + `/2.0/repositories/${encodeURIComponent(String(username))}/${encodeURIComponent(String(slug))}/pullrequests/${encodeURIComponent(String(pid))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPullRequestsByIdResult;
@@ -189,7 +189,7 @@ export class LinkExampleClient {
     const url = new URL(this.cleanBaseUrl + `/2.0/repositories/${encodeURIComponent(String(username))}/${encodeURIComponent(String(slug))}/pullrequests/${encodeURIComponent(String(pid))}/merge`);
     const response = await http.asyncRequest("POST", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as MergePullRequestResult;
@@ -200,7 +200,7 @@ export class LinkExampleClient {
     const url = new URL(this.cleanBaseUrl + `/2.0/users/${encodeURIComponent(String(username))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetUserByNameResult;

@@ -19,12 +19,16 @@ export type GetItemByIdOptions = {
 
 export type GetItemByIdResult = {
   data: GetItemById200;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: undefined;
-  ok: false;
   response: Response;
+  status: 404;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -66,7 +70,7 @@ export class SimpleAPIClient {
     const url = new URL(this.cleanBaseUrl + `/items/${encodeURIComponent(String(id))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetItemByIdResult;

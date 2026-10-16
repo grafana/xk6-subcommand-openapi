@@ -34,13 +34,23 @@ export type ListPetsOptions = {
 
 export type ListPetsResult = {
   data: Response2;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: Exclude2 | PetStoreClient2;
-  ok: false;
+  data: Exclude2;
   response: Response;
+  status: 400;
+} | {
+  data: PetStoreClient2;
+  response: Response;
+  status: ListPetsStatusDefault;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
+
+export type ListPetsStatusDefault = Exclude<HttpStatusAll, 200 | 400>;
 
 export type PetStoreClient2 = {
   code?: number;
@@ -64,7 +74,7 @@ export class PetStoreClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPetsResult;

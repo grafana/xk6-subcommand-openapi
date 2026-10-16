@@ -45,12 +45,12 @@ export type ListDataSetsOptions = {
 
 export type ListDataSetsResult = {
   data: DataSetList;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type ListSearchableFieldsOptions = {
@@ -59,12 +59,16 @@ export type ListSearchableFieldsOptions = {
 
 export type ListSearchableFieldsResult = {
   data: string;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: string;
-  ok: false;
   response: Response;
+  status: 404;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 export type PerformSearchBody = {
@@ -85,12 +89,16 @@ export type PerformSearchResult = {
   data: {
     [key: string]: Record<string, unknown>;
   }[];
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: undefined;
-  ok: false;
   response: Response;
+  status: 404;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 export class USPTODataSetAPIClient {
@@ -108,7 +116,7 @@ export class USPTODataSetAPIClient {
     const url = new URL(this.cleanBaseUrl + `/`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListDataSetsResult;
@@ -127,7 +135,7 @@ export class USPTODataSetAPIClient {
     const url = new URL(this.cleanBaseUrl + `/${encodeURIComponent(String(dataset))}/${encodeURIComponent(String(version))}/fields`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListSearchableFieldsResult;
@@ -150,7 +158,7 @@ export class USPTODataSetAPIClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PerformSearchResult;

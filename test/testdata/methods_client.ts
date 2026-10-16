@@ -12,12 +12,12 @@ export type DeletePetsPetIdOptions = {
 
 export type DeletePetsPetIdResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetPetByIdOptions = {
@@ -26,12 +26,12 @@ export type GetPetByIdOptions = {
 
 export type GetPetByIdResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetPetsPetIdToysJsonOptions = {
@@ -40,12 +40,12 @@ export type GetPetsPetIdToysJsonOptions = {
 
 export type GetPetsPetIdToysJsonResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -72,12 +72,12 @@ export type LinkPetsOptions = {
 
 export type LinkPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type ListPets2Options = {
@@ -86,12 +86,12 @@ export type ListPets2Options = {
 
 export type ListPets2Result = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type ListPets3Options = {
@@ -100,12 +100,12 @@ export type ListPets3Options = {
 
 export type ListPets3Result = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type ListPetsOptions = {
@@ -114,12 +114,12 @@ export type ListPetsOptions = {
 
 export type ListPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type QueryPetsOptions = {
@@ -128,12 +128,12 @@ export type QueryPetsOptions = {
 
 export type QueryPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type _2faVerifyOptions = {
@@ -142,12 +142,12 @@ export type _2faVerifyOptions = {
 
 export type _2faVerifyResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export class ApiClient {
@@ -164,7 +164,7 @@ export class ApiClient {
     const url = new URL(this.cleanBaseUrl + `/2fa`);
     const response = await http.asyncRequest("POST", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as _2faVerifyResult;
@@ -175,7 +175,7 @@ export class ApiClient {
     const url = new URL(this.cleanBaseUrl + `/animals`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPetsResult;
@@ -186,7 +186,7 @@ export class ApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPets2Result;
@@ -197,7 +197,7 @@ export class ApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("COPY", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPets3Result;
@@ -208,7 +208,7 @@ export class ApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("LINK", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as LinkPetsResult;
@@ -219,7 +219,7 @@ export class ApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("QUERY", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as QueryPetsResult;
@@ -230,7 +230,7 @@ export class ApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPetByIdResult;
@@ -241,7 +241,7 @@ export class ApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}`);
     const response = await http.asyncRequest("DELETE", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as DeletePetsPetIdResult;
@@ -252,7 +252,7 @@ export class ApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}/toys.json`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPetsPetIdToysJsonResult;

@@ -12,12 +12,12 @@ export type GetInheritedOptions = {
 
 export type GetInheritedResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetOwnOptions = {
@@ -26,12 +26,12 @@ export type GetOwnOptions = {
 
 export type GetOwnResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetPublicOptions = {
@@ -40,12 +40,12 @@ export type GetPublicOptions = {
 
 export type GetPublicResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetSuppliableOptions = {
@@ -54,12 +54,12 @@ export type GetSuppliableOptions = {
 
 export type GetSuppliableResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -86,12 +86,12 @@ export type PostOwnOptions = {
 
 export type PostOwnResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export class SecurityClient {
@@ -108,7 +108,7 @@ export class SecurityClient {
     const url = new URL(this.cleanBaseUrl + `/inherited`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetInheritedResult;
@@ -119,7 +119,7 @@ export class SecurityClient {
     const url = new URL(this.cleanBaseUrl + `/own`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetOwnResult;
@@ -130,7 +130,7 @@ export class SecurityClient {
     const url = new URL(this.cleanBaseUrl + `/own`);
     const response = await http.asyncRequest("POST", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PostOwnResult;
@@ -141,7 +141,7 @@ export class SecurityClient {
     const url = new URL(this.cleanBaseUrl + `/public`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPublicResult;
@@ -152,7 +152,7 @@ export class SecurityClient {
     const url = new URL(this.cleanBaseUrl + `/suppliable`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetSuppliableResult;

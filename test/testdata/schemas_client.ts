@@ -16,12 +16,12 @@ export type GetInventoryOptions = {
 
 export type GetInventoryResult = {
   data: Inventory;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetMiscOptions = {
@@ -30,12 +30,12 @@ export type GetMiscOptions = {
 
 export type GetMiscResult = {
   data: Misc;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetPet200 = {
@@ -58,12 +58,16 @@ export type GetPetQuery = {
 
 export type GetPetResult = {
   data: GetPet200;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: GetPetResult2;
-  ok: false;
   response: Response;
+  status: 404;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 /** Conflicts with the Result type of getPet, which is declared first. */
@@ -77,12 +81,12 @@ export type GetTreeOptions = {
 
 export type GetTreeResult = {
   data: Node;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -115,12 +119,12 @@ export type ListShapesOptions = {
 
 export type ListShapesResult = {
   data: Shape[];
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type Misc = {
@@ -194,7 +198,7 @@ export class SchemasClient {
     const url = new URL(this.cleanBaseUrl + `/inventory`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetInventoryResult;
@@ -205,7 +209,7 @@ export class SchemasClient {
     const url = new URL(this.cleanBaseUrl + `/misc`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetMiscResult;
@@ -217,7 +221,7 @@ export class SchemasClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPetResult;
@@ -228,7 +232,7 @@ export class SchemasClient {
     const url = new URL(this.cleanBaseUrl + `/shapes`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListShapesResult;
@@ -239,7 +243,7 @@ export class SchemasClient {
     const url = new URL(this.cleanBaseUrl + `/tree`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetTreeResult;

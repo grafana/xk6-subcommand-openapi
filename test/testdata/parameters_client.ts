@@ -22,12 +22,12 @@ export type DeleteOwnerQuery = {
 
 export type DeleteOwnerResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetCopyOptions = {
@@ -36,12 +36,12 @@ export type GetCopyOptions = {
 
 export type GetCopyResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetFileOptions = {
@@ -50,12 +50,12 @@ export type GetFileOptions = {
 
 export type GetFileResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetOwnerOptions = {
@@ -69,12 +69,12 @@ export type GetOwnerQuery = {
 
 export type GetOwnerResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetPetHeaders = {
@@ -94,12 +94,12 @@ export type GetPetQuery = {
 
 export type GetPetResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetStoreOptions = {
@@ -108,12 +108,12 @@ export type GetStoreOptions = {
 
 export type GetStoreResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -149,12 +149,12 @@ export type ListPetsQuery = {
 
 export type ListPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type OwnerId = "alice" | "bob";
@@ -173,7 +173,7 @@ export class ParametersClient {
     const url = new URL(this.cleanBaseUrl + `/copies/${encodeURIComponent(String(copyId))}/of/${encodeURIComponent(String(copyId))}/${encodeURIComponent(String(arg))}/{unclosed`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetCopyResult;
@@ -184,7 +184,7 @@ export class ParametersClient {
     const url = new URL(this.cleanBaseUrl + `/files/\`$${encodeURIComponent(String(x))}/$/${encodeURIComponent(String(name))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetFileResult;
@@ -203,7 +203,7 @@ export class ParametersClient {
     const url = new URL(this.cleanBaseUrl + `/owners/${encodeURIComponent(String(ownerId))}` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetOwnerResult;
@@ -218,7 +218,7 @@ export class ParametersClient {
     const url = new URL(this.cleanBaseUrl + `/owners/${encodeURIComponent(String(ownerId))}` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("DELETE", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as DeleteOwnerResult;
@@ -230,7 +230,7 @@ export class ParametersClient {
     const url = new URL(this.cleanBaseUrl + `/pets` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPetsResult;
@@ -245,7 +245,7 @@ export class ParametersClient {
     const url = new URL(this.cleanBaseUrl + `/pets/${encodeURIComponent(String(petId))}` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPetResult;
@@ -256,7 +256,7 @@ export class ParametersClient {
     const url = new URL(this.cleanBaseUrl + `/stores/${encodeURIComponent(String(storeId))}/${encodeURIComponent(String(default_))}/${encodeURIComponent(String(url_))}/${encodeURIComponent(String(_1st))}/${encodeURIComponent(String(storeId2))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetStoreResult;

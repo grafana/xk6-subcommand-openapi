@@ -11,13 +11,9 @@ export type GetFlightsDelayedOptions = {
 };
 
 export type GetFlightsDelayedResult = {
-  data: unknown;
-  ok: true;
+  data: undefined;
   response: Response;
-} | {
-  data: unknown;
-  ok: false;
-  response: Response;
+  status: 0;
 };
 
 export type GetFlightsDomesticOptions = {
@@ -25,13 +21,9 @@ export type GetFlightsDomesticOptions = {
 };
 
 export type GetFlightsDomesticResult = {
-  data: unknown;
-  ok: true;
+  data: undefined;
   response: Response;
-} | {
-  data: unknown;
-  ok: false;
-  response: Response;
+  status: 0;
 };
 
 export type GetFlightsInternationalOptions = {
@@ -39,13 +31,9 @@ export type GetFlightsInternationalOptions = {
 };
 
 export type GetFlightsInternationalResult = {
-  data: unknown;
-  ok: true;
+  data: undefined;
   response: Response;
-} | {
-  data: unknown;
-  ok: false;
-  response: Response;
+  status: 0;
 };
 
 export type GetFlightsOptions = {
@@ -53,13 +41,9 @@ export type GetFlightsOptions = {
 };
 
 export type GetFlightsResult = {
-  data: unknown;
-  ok: true;
+  data: undefined;
   response: Response;
-} | {
-  data: unknown;
-  ok: false;
-  response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -95,7 +79,7 @@ export class FlightAPIClient {
     const url = new URL(this.cleanBaseUrl + `/flights`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetFlightsResult;
@@ -107,7 +91,7 @@ export class FlightAPIClient {
     const url = new URL(this.cleanBaseUrl + `/flights/delayed`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetFlightsDelayedResult;
@@ -119,7 +103,7 @@ export class FlightAPIClient {
     const url = new URL(this.cleanBaseUrl + `/flights/domestic`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetFlightsDomesticResult;
@@ -131,7 +115,7 @@ export class FlightAPIClient {
     const url = new URL(this.cleanBaseUrl + `/flights/international`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetFlightsInternationalResult;

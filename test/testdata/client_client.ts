@@ -13,12 +13,12 @@ export type CreatePetOptions = {
 
 export type CreatePetResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type DeletePetsOptions = {
@@ -27,12 +27,12 @@ export type DeletePetsOptions = {
 
 export type DeletePetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type HeadPetsOptions = {
@@ -41,12 +41,12 @@ export type HeadPetsOptions = {
 
 export type HeadPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -73,12 +73,12 @@ export type ListOwnersOptions = {
 
 export type ListOwnersResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type ListPetsOptions = {
@@ -92,12 +92,12 @@ export type ListPetsQuery = {
 
 export type ListPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type ListZoosOptions = {
@@ -106,12 +106,12 @@ export type ListZoosOptions = {
 
 export type ListZoosResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type OptionsPetsOptions = {
@@ -120,12 +120,12 @@ export type OptionsPetsOptions = {
 
 export type OptionsPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type PatchPetsOptions = {
@@ -134,12 +134,12 @@ export type PatchPetsOptions = {
 
 export type PatchPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type PutPetsOptions = {
@@ -148,12 +148,12 @@ export type PutPetsOptions = {
 
 export type PutPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type TracePetsOptions = {
@@ -162,12 +162,12 @@ export type TracePetsOptions = {
 
 export type TracePetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export class PetStoreApiClient {
@@ -184,7 +184,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/Zoos`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListZoosResult;
@@ -195,7 +195,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/owners`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListOwnersResult;
@@ -212,7 +212,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPetsResult;
@@ -224,7 +224,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("PUT", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PutPetsResult;
@@ -236,7 +236,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("POST", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreatePetResult;
@@ -247,7 +247,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("DELETE", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as DeletePetsResult;
@@ -258,7 +258,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("OPTIONS", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as OptionsPetsResult;
@@ -269,7 +269,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("HEAD", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as HeadPetsResult;
@@ -280,7 +280,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("PATCH", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PatchPetsResult;
@@ -291,7 +291,7 @@ export class PetStoreApiClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("TRACE", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as TracePetsResult;

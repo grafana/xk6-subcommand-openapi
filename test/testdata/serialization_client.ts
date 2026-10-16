@@ -20,12 +20,12 @@ export type CreateExtraOptions = {
 
 export type CreateExtraResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type CreatePetBody = {
@@ -51,12 +51,12 @@ export type CreatePetNestedOptions = {
 
 export type CreatePetNestedResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type CreatePetOptions = {
@@ -66,12 +66,12 @@ export type CreatePetOptions = {
 
 export type CreatePetResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type CreateTreeBody = Label & {
@@ -91,12 +91,12 @@ export type CreateTreeOptions = {
 
 export type CreateTreeResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type FilterPetsNestedOptions = {
@@ -115,12 +115,12 @@ export type FilterPetsNestedQuery = {
 
 export type FilterPetsNestedResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type FilterPetsOptions = {
@@ -138,12 +138,12 @@ export type FilterPetsQuery = {
 
 export type FilterPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -182,12 +182,12 @@ export type ListPetsByOwnersQuery = {
 
 export type ListPetsByOwnersResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type ListPetsOptions = {
@@ -202,12 +202,12 @@ export type ListPetsQuery = {
 
 export type ListPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type ListTreesOptions = {
@@ -241,12 +241,12 @@ export type ListTreesQuery = {
 
 export type ListTreesResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type PatchExtraBody = {
@@ -262,12 +262,12 @@ export type PatchExtraOptions = {
 
 export type PatchExtraResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type ReplaceExtraBody = {
@@ -286,12 +286,12 @@ export type ReplaceExtraOptions = {
 
 export type ReplaceExtraResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type SearchPetsBody = {
@@ -308,12 +308,12 @@ export type SearchPetsOptions = {
 
 export type SearchPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type Tree = {
@@ -339,7 +339,7 @@ export class SerializationClient {
     }
     const response = await http.asyncRequest("PUT", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ReplaceExtraResult;
@@ -354,7 +354,7 @@ export class SerializationClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreateExtraResult;
@@ -369,7 +369,7 @@ export class SerializationClient {
     }
     const response = await http.asyncRequest("PATCH", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PatchExtraResult;
@@ -381,7 +381,7 @@ export class SerializationClient {
     const url = new URL(this.cleanBaseUrl + `/pets` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPetsResult;
@@ -396,7 +396,7 @@ export class SerializationClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreatePetResult;
@@ -408,7 +408,7 @@ export class SerializationClient {
     const url = new URL(this.cleanBaseUrl + `/pets/filtered` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as FilterPetsResult;
@@ -420,7 +420,7 @@ export class SerializationClient {
     const url = new URL(this.cleanBaseUrl + `/pets/nested` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as FilterPetsNestedResult;
@@ -435,7 +435,7 @@ export class SerializationClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreatePetNestedResult;
@@ -447,7 +447,7 @@ export class SerializationClient {
     const url = new URL(this.cleanBaseUrl + `/pets/owners` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListPetsByOwnersResult;
@@ -462,7 +462,7 @@ export class SerializationClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as SearchPetsResult;
@@ -474,7 +474,7 @@ export class SerializationClient {
     const url = new URL(this.cleanBaseUrl + `/trees` + (query === "" ? "" : "?" + query));
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ListTreesResult;
@@ -489,7 +489,7 @@ export class SerializationClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreateTreeResult;

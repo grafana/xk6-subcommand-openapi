@@ -17,12 +17,12 @@ export type GetBoardOptions = {
 
 export type GetBoardResult = {
   data: Status;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type GetSquareOptions = {
@@ -31,12 +31,16 @@ export type GetSquareOptions = {
 
 export type GetSquareResult = {
   data: Mark;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: Response["body"];
-  ok: false;
   response: Response;
+  status: 400;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -72,13 +76,21 @@ export type PutSquareOptions = {
 };
 
 export type PutSquareResult = {
-  data: Status | undefined;
-  ok: true;
+  data: Status;
   response: Response;
+  status: 200;
+} | {
+  data: undefined;
+  response: Response;
+  status: 202;
 } | {
   data: Response["body"];
-  ok: false;
   response: Response;
+  status: 400;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 export type Status = {
@@ -108,7 +120,7 @@ export class TicTacToeClient {
     const url = new URL(this.cleanBaseUrl + `/board`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetBoardResult;
@@ -127,7 +139,7 @@ export class TicTacToeClient {
     const url = new URL(this.cleanBaseUrl + `/board/${encodeURIComponent(String(row))}/${encodeURIComponent(String(column))}`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetSquareResult;
@@ -150,7 +162,7 @@ export class TicTacToeClient {
     }
     const response = await http.asyncRequest("PUT", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PutSquareResult;

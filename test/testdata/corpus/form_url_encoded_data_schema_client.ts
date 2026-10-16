@@ -50,12 +50,16 @@ export type PostSubmitFormOptions = {
 
 export type PostSubmitFormResult = {
   data: PostSubmitForm200;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
   data: PostSubmitForm400;
-  ok: false;
   response: Response;
+  status: 400;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 export class FormURLEncodedAPIClient {
@@ -81,7 +85,7 @@ export class FormURLEncodedAPIClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PostSubmitFormResult;

@@ -18,12 +18,12 @@ export type CreateDocumentOptions = {
 
 export type CreateDocumentResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type CreateNoteOptions = {
@@ -33,12 +33,12 @@ export type CreateNoteOptions = {
 
 export type CreateNoteResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type CreatePetOptions = {
@@ -54,12 +54,12 @@ export type CreatePetQuery = {
 
 export type CreatePetResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type CreateUploadOptions = {
@@ -69,12 +69,12 @@ export type CreateUploadOptions = {
 
 export type CreateUploadResult = {
   data: Upload;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 /** The status codes from 100 to 199. */
@@ -102,12 +102,12 @@ export type ImportPetOptions = {
 
 export type ImportPetResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type PatchPetOptions = {
@@ -117,12 +117,12 @@ export type PatchPetOptions = {
 
 export type PatchPetResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type Pet = {
@@ -137,12 +137,12 @@ export type PostBlobOptions = {
 
 export type PostBlobResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type PutBlobOptions = {
@@ -152,12 +152,12 @@ export type PutBlobOptions = {
 
 export type PutBlobResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type SearchPetsBody = {
@@ -173,12 +173,12 @@ export type SearchPetsOptions = {
 
 export type SearchPetsResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 200;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type UpdatePetOptions = {
@@ -188,12 +188,12 @@ export type UpdatePetOptions = {
 
 export type UpdatePetResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export type Upload = {
@@ -217,12 +217,12 @@ export type UploadPhotoOptions = {
 
 export type UploadPhotoResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 201;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export class RequestBodiesClient {
@@ -240,7 +240,7 @@ export class RequestBodiesClient {
     const body = options?.body;
     const response = await http.asyncRequest("PUT", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PutBlobResult;
@@ -255,7 +255,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PostBlobResult;
@@ -271,7 +271,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreateDocumentResult;
@@ -286,7 +286,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreateNoteResult;
@@ -302,7 +302,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreatePetResult;
@@ -318,7 +318,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ImportPetResult;
@@ -333,7 +333,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as SearchPetsResult;
@@ -348,7 +348,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("PUT", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as UpdatePetResult;
@@ -363,7 +363,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("PATCH", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as PatchPetResult;
@@ -379,7 +379,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as UploadPhotoResult;
@@ -395,7 +395,7 @@ export class RequestBodiesClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreateUploadResult;

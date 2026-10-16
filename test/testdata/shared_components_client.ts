@@ -12,13 +12,13 @@ export type CreatePetOptions = {
 };
 
 export type CreatePetResult = {
-  data: unknown;
-  ok: true;
-  response: Response;
-} | {
   data: NotFoundResponse | NotFoundResponse2;
-  ok: false;
   response: Response;
+  status: 404;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
 
 export type GetPetOptions = {
@@ -27,13 +27,19 @@ export type GetPetOptions = {
 
 export type GetPetResult = {
   data: NotFoundResponse | NotFoundResponse2;
-  ok: true;
   response: Response;
+  status: 404;
 } | {
   data: NotFoundResponse | NotFoundResponse2;
-  ok: false;
   response: Response;
+  status: GetPetStatusDefault;
+} | {
+  data: undefined;
+  response: Response;
+  status: 0;
 };
+
+export type GetPetStatusDefault = Exclude<HttpStatusAll, 404>;
 
 /** The status codes from 100 to 199. */
 export type HttpStatus1XX = 100 | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 | 111 | 112 | 113 | 114 | 115 | 116 | 117 | 118 | 119 | 120 | 121 | 122 | 123 | 124 | 125 | 126 | 127 | 128 | 129 | 130 | 131 | 132 | 133 | 134 | 135 | 136 | 137 | 138 | 139 | 140 | 141 | 142 | 143 | 144 | 145 | 146 | 147 | 148 | 149 | 150 | 151 | 152 | 153 | 154 | 155 | 156 | 157 | 158 | 159 | 160 | 161 | 162 | 163 | 164 | 165 | 166 | 167 | 168 | 169 | 170 | 171 | 172 | 173 | 174 | 175 | 176 | 177 | 178 | 179 | 180 | 181 | 182 | 183 | 184 | 185 | 186 | 187 | 188 | 189 | 190 | 191 | 192 | 193 | 194 | 195 | 196 | 197 | 198 | 199;
@@ -72,12 +78,12 @@ export type ReplacePetOptions = {
 
 export type ReplacePetResult = {
   data: undefined;
-  ok: true;
   response: Response;
+  status: 204;
 } | {
-  data: unknown;
-  ok: false;
+  data: undefined;
   response: Response;
+  status: 0;
 };
 
 export class SharedComponentsClient {
@@ -94,7 +100,7 @@ export class SharedComponentsClient {
     const url = new URL(this.cleanBaseUrl + `/pets`);
     const response = await http.asyncRequest("GET", url.toString(), null, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as GetPetResult;
@@ -109,7 +115,7 @@ export class SharedComponentsClient {
     }
     const response = await http.asyncRequest("PUT", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as ReplacePetResult;
@@ -124,7 +130,7 @@ export class SharedComponentsClient {
     }
     const response = await http.asyncRequest("POST", url.toString(), body, this._mergeK6Params(options?.k6Params, headers));
     return {
-      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
       data: this._decodeBody(response),
       response,
     } as CreatePetResult;
