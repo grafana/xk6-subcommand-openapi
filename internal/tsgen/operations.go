@@ -104,7 +104,7 @@ func (o *operationMapper) clientMethods(doc *openapi3.T) []model.Method {
 	methods := make([]model.Method, 0, len(ops))
 	referenced := make(map[string]bool)
 
-	// The status code types are declared first, so they keep their names.
+	// The status code types are declared first, so they keep their names, which are reserved.
 	if len(ops) > 0 {
 		o.statusTypes = declareStatusTypes(o.types)
 	}

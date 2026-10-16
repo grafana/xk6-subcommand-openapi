@@ -61,11 +61,12 @@ func exampleBaseURL(servers openapi3.Servers) string {
 // buildFile builds the model of the client library for doc, reporting skipped
 // or approximated constructs through warn.
 func buildFile(doc *openapi3.T, warn func(string)) *model.File {
-	types := newTypeDeclarations(warn)
+	f := &model.File{Client: model.Client{Name: clientName(doc.Info)}}
+
+	types := newTypeDeclarations(warn, f.Client.Name)
 	schemas := newSchemaMapper(types, warn)
 	ops := newOperationMapper(types, schemas, warn)
 
-	f := &model.File{Client: model.Client{Name: clientName(doc.Info)}}
 	if doc.Info != nil {
 		f.Info = model.Info{
 			Title:       doc.Info.Title,
@@ -125,8 +126,16 @@ type typeDeclarations struct {
 	decls map[string]model.TypeDecl // by name
 }
 
-func newTypeDeclarations(warn func(string)) *typeDeclarations {
-	return &typeDeclarations{names: newNameRegistry("type", warn), decls: make(map[string]model.TypeDecl)}
+// newTypeDeclarations returns empty type declarations whose names cannot be reserved names:
+// the client class name, the identifiers that the client library imports, and the global types that it uses
+// in type positions. The status code types keep their names because they are declared first.
+// Identifiers used only as values, such as JSON, are not reserved, because a type alias does not shadow a value.
+func newTypeDeclarations(warn func(string), clientName string) *typeDeclarations {
+	names := newNameRegistry("type", warn)
+	names.reserve(clientName, "FileData", "FormData", "Params", "Response", "URL", "URLSearchParams")
+	names.reserve("ArrayBuffer", "Exclude", "Promise", "Record")
+
+	return &typeDeclarations{names: names, decls: make(map[string]model.TypeDecl)}
 }
 
 // declare claims a unique name based on name, builds the type, records the declaration, and returns
