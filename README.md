@@ -265,6 +265,7 @@ The subcommand logs a warning for each such scheme that an operation uses.
 
 - [Go](https://go.dev/doc/install), in the version required by `go.mod` or newer.
 - [xk6](https://github.com/grafana/xk6), used by `make build`, `make it`, and `make lint`.
+- [Node.js](https://nodejs.org/), used only by `make typecheck`.
 - [gosec](https://github.com/securego/gosec) and [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck), used by `xk6 lint` in `make lint`:
 
   ```sh
@@ -282,6 +283,7 @@ Run `make` (or `make help`) to list the targets.
 | `make build` | Build `./k6` with this extension using xk6. |
 | `make test` | Run the Go tests. |
 | `make it` | Run the integration test against a real k6 binary built with xk6. |
+| `make typecheck` | Type-check the generated client libraries in `test/testdata` with TypeScript, including the narrowing assertions in `test/typecheck`; needs Node.js. |
 | `make lint` | Run golangci-lint with the [grafana/k6-ci](https://github.com/grafana/k6-ci) config plus `.golangci.patch`, then `xk6 lint` without its `versions` check. |
 | `make format` | Format the Go sources. |
 | `make update-lint-patch` | Regenerate `.golangci.patch` from a locally edited `build/lint/.golangci.yml`. |
@@ -296,6 +298,12 @@ It checks that `k6 x --help` lists `openapi`, then generates every descriptor in
 A run fails if k6 exits with an error or logs one.
 The generated scripts import from jslib.k6.io, so `make it` needs network access.
 In CI, the `integration` workflow ([`.github/workflows/integration.yml`](.github/workflows/integration.yml)) runs `make it` with the latest xk6 and k6 releases.
+
+### Type check
+
+`make typecheck` installs the pinned TypeScript compiler and the k6 type definitions from [`test/typecheck/package.json`](test/typecheck/package.json) and type-checks every golden client library in [`test/testdata`](test/testdata/) in strict mode.
+It also type-checks the `*.check.ts` files in [`test/typecheck`](test/typecheck/), which assert that the result types narrow as specified: the check fails if a narrowed type differs from the expected one, or if a line marked with `@ts-expect-error` compiles.
+In CI, the `typecheck` workflow ([`.github/workflows/typecheck.yml`](.github/workflows/typecheck.yml)) runs `make typecheck`.
 
 ## Contributing
 

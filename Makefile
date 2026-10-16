@@ -38,6 +38,11 @@ test:
 it:
 	MODULE=$(MODULE) ./test/it.sh
 
+## typecheck: Type-check the generated client libraries in test/testdata with TypeScript; needs Node.js.
+.PHONY: typecheck
+typecheck:
+	cd test/typecheck && npm ci --no-audit --no-fund && npx tsc -p .
+
 # xk6 lint's versions check requires a vX.Y.Z git tag; re-enable it once the first release is tagged.
 ## lint: Run golangci-lint with the k6-ci config plus .golangci.patch, then xk6 lint.
 .PHONY: lint
