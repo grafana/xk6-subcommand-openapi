@@ -15,11 +15,11 @@
 
 ## 3. Documentation
 
-- [ ] 3.1 Update the `Result` section and the example in `README.md`: replace `ok` with `status`, show narrowing with `if` and `switch` on `status` and exact status checks in `check`, describe the status code types and the per-method status types, that undocumented codes are not in the type, so a comparison with one is flagged by editors and `res.response.status` can be compared instead, the status 0 variant for requests without a response, and that `expect(...).toBe(...)` does not narrow; remove the sentence about a missing `await` giving `ok` as `undefined`; in `Known limitations`, replace the item about generated names colliding with identifiers the client library uses by one about method names such as `constructor` only, and describe in `The generated client` that a schema with a reserved name, such as `Response`, gets a numeric suffix and a warning; verify every type name and field in the README matches `results_client.ts`
+- [x] 3.1 Update the `Result` section and the example in `README.md`: replace `ok` with `status`, show narrowing with `if` and `switch` on `status` and exact status checks in `check`, describe the status code types and the per-method status types, that undocumented codes are not in the type, so a comparison with one is flagged by editors and `res.response.status` can be compared instead, the status 0 variant for requests without a response, and that `expect(...).toBe(...)` does not narrow; remove the sentence about a missing `await` giving `ok` as `undefined`; in `Known limitations`, replace the item about generated names colliding with identifiers the client library uses by one about method names such as `constructor` only, and describe in `The generated client` that a schema with a reserved name, such as `Response`, gets a numeric suffix and a warning; verify every type name and field in the README matches `results_client.ts`
 
 ## 4. Final checks
 
-- [ ] 4.1 Verify `openspec validate discriminate-results-by-status --strict`, `make test`, `make it`, and `make lint` pass without new `.golangci.patch` entries, and `git status` shows no untracked build output
+- [x] 4.1 Verify `openspec validate discriminate-results-by-status --strict`, `make test`, `make it`, and `make lint` pass without new `.golangci.patch` entries, and `git status` shows no untracked build output
 
 ## 5. Type check
 

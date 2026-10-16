@@ -76,7 +76,9 @@ xk6 x -- openapi api.yaml --example
 ## The generated client
 
 The client library is a single TypeScript module that k6 runs without a build step.
-It exports one type for each schema the operations use, the options and result types of each method, and one client class named after `info.title`, such as `PetStoreClient`.
+It exports one type for each schema the operations use, the options and result types of each method, the status code types, and one client class named after `info.title`, such as `PetStoreClient`.
+A generated type that would get a name the client library reserves gets a numeric suffix, such as `Response2` for a schema named `Response`, and the subcommand logs a warning.
+These names are `ArrayBuffer`, `Exclude`, `FileData`, `FormData`, `Params`, `Promise`, `Record`, `Response`, `URL`, `URLSearchParams`, the client class name, and the names of the status code types.
 
 For this descriptor excerpt:
 
@@ -159,21 +161,30 @@ const client = new PetStoreClient({
 
 export default async function () {
   const created = await client.createPet({ body: { name: "Rex" } });
-  check(created, { "pet created": (res) => res.ok });
+  check(created, { "pet created": (res) => res.status === 201 });
+  if (created.status === 201) {
+    console.log(created.data.id); // created.data is a Pet
+  }
 
   const res = await client.getPet(1, { k6Params: { tags: { name: "getPet" } } });
-  if (res.ok) {
-    console.log(res.data.name); // res.data is a Pet
-  } else {
-    console.log(res.response.status, res.data?.message); // res.data is an Error, or undefined without a response
+  switch (res.status) {
+    case 200:
+      console.log(res.data.name); // res.data is a Pet
+      break;
+    case 404:
+      console.log(res.data.message); // res.data is an Error
+      break;
+    case 0:
+      console.log("no response"); // res.data is undefined
+      break;
   }
 
   const [first, second] = await Promise.all([client.getPet(1), client.getPet(2)]);
-  check(first, { "first pet found": (r) => r.ok });
-  check(second, { "second pet found": (r) => r.ok });
+  check(first, { "first pet found": (r) => r.status === 200 });
+  check(second, { "second pet found": (r) => r.status === 200 });
 
   const pets = await client.listPets({ query: { limit: 10 } });
-  check(pets, { "pets listed": (r) => r.ok });
+  check(pets, { "pets listed": (r) => r.status === 200 });
 }
 ```
 
@@ -186,7 +197,6 @@ Trailing slashes are removed from `baseUrl`.
 
 There is one method per operation, named after its `operationId` in camelCase, or after the HTTP method and the path, such as `getPetsPetId`.
 Every method is `async`: it sends its request with k6's non-blocking `http.asyncRequest` and returns a promise, so always `await` it.
-Without `await`, the result is a `Promise`, whose `ok` is `undefined`.
 Several calls can run concurrently with `Promise.all`.
 
 A method takes the path parameters as positional arguments, in path order, followed by an `options` object with these members:
@@ -202,18 +212,32 @@ A member is required only if the descriptor marks a parameter or the request bod
 
 ### Result
 
-A method's promise resolves to `{ ok, data, response }`:
+A method's promise resolves to `{ status, data, response }`:
 
-- `ok` is `true` if the status is from 200 to 299, and `false` otherwise, including status 0 when k6 received no response.
+- `status` is the HTTP status code of the response, or 0 if k6 received no response, such as on a timeout, a refused connection, or a DNS or TLS failure.
 - `data` is the response body decoded according to the response's `Content-Type` header: parsed as JSON for `application/json` and media types ending in `+json`, and the unparsed body for any other or a missing `Content-Type`; it is `undefined` for an empty body.
 - `response` is the k6 [`Response`](https://grafana.com/docs/k6/latest/javascript-api/k6-http/response/).
 
-Checking `ok` narrows the type of `data` to the union of the documented success types or of the documented error types.
 If a body whose `Content-Type` says JSON is not valid JSON, the promise rejects with the parse error.
 If a request fails and the k6 `throw` option is set, the promise rejects with k6's error.
 
-The type of `data` describes documented responses only.
-For an undocumented response, such as a gateway error page, or a response with another `Content-Type` than documented, `data` holds whatever the decoding above produces, which may not match its type.
+The result type, such as `GetPetResult`, is a union with one variant for each documented response and one for status 0, whose `data` is `undefined`.
+Checking `status` with `if` or `switch`, as in the example above, narrows `data` to the type documented for that status.
+The type of `status` in a variant is:
+
+- an explicit code, such as `404`: the code itself.
+- a range, such as `4XX`: the exported type `HttpStatus4XX`, the codes from 400 to 499.
+  If the operation also documents codes in that range, a type named after the method instead, such as `GetPetStatus4XX`, the range without those codes.
+- `default`: the exported type `HttpStatusAll`, the codes from 100 to 599.
+  Next to other responses, a type named after the method instead, such as `GetPetStatusDefault`, the codes that no other documented response covers.
+
+To check for success, compare `status` with the expected code, such as `res.status === 201`, and for an operation with several success responses, list them, such as `res.status === 200 || res.status === 202`.
+Assertions such as `expect(res.status).toBe(200)` check the value but do not narrow `data`, because `expect` is not a TypeScript assertion function; use `if` or `switch` to narrow.
+
+The result type describes documented responses only; for an undocumented response, such as a gateway error page, `status` and `data` hold the actual values outside the type.
+Editors therefore report a comparison such as `res.status === 503`, for an operation that documents neither `503`, `5XX`, nor `default`, as a comparison that never matches; compare `res.response.status`, a plain `number`, instead.
+For the same reason, the `default` branch of a `switch` over the documented codes types the result as `never`, although such a response can occur.
+For a response with another `Content-Type` than documented, `data` holds whatever the decoding above produces, which may not match its type.
 
 ### Credentials and security schemes
 
@@ -233,7 +257,7 @@ The subcommand logs a warning for each such scheme that an operation uses.
 
 - The client imports `URL`, `URLSearchParams`, and `FormData` from [jslib.k6.io](https://jslib.k6.io), so running a script that contains it needs network access to jslib.k6.io. A later change will remove this requirement.
 - Generating credential options from security schemes is not supported yet.
-- Generated names can collide with identifiers the client library uses, such as a schema named `Response` or `Promise`, or an operation named `constructor`, and the client library may then be invalid.
+- A method name can collide with a member that the client class declares itself, such as an operation named `constructor`, and the client library may then be invalid.
 
 ## Development
 
