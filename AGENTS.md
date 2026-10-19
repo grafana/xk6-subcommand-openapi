@@ -25,3 +25,4 @@ A Go code change is not done until all of these pass:
 - `make test`: the in-process Go tests.
 - `make it`: the integration test against a real k6 binary built with xk6.
 - `make lint`: golangci-lint, configured the same way k6 configures it, plus `xk6 lint`.
+- `make typecheck`: the TypeScript type check of the generated client libraries and of the narrowing assertions in `test/typecheck/`.

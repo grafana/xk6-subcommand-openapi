@@ -1,0 +1,31 @@
+# Type check of the generated client libraries. The shared grafana/k6-ci workflow only runs Go-level checks,
+# so this job type-checks the golden client libraries in test/testdata with TypeScript and runs the assertions
+# in test/typecheck through `make typecheck`, the same target used locally.
+name: typecheck
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+          package-manager-cache: false # against cache-poisoning
+
+      - name: Type check
+        run: make typecheck

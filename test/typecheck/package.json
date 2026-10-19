@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "Type-checks the generated client libraries in test/testdata; run it with `make typecheck`.",
+  "devDependencies": {
+    "@types/k6": "2.3.0",
+    "typescript": "7.0.2"
+  }
+}

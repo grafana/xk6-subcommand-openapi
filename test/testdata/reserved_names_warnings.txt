@@ -1,0 +1,3 @@
+type name "Response" is already used, so the schema #/components/schemas/Response is named "Response2"
+type name "Exclude" is already used, so the schema #/components/schemas/Exclude is named "Exclude2"
+type name "PetStoreClient" is already used, so the schema #/components/schemas/PetStoreClient is named "PetStoreClient2"

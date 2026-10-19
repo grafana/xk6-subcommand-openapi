@@ -1,0 +1,41 @@
+# Schema types: reserved type names; schemas named like an identifier that the client library imports (Response),
+# like a global type that it uses (Exclude), and like the client class (PetStoreClient) get a numeric suffix and
+# a warning.
+openapi: 3.0.3
+info:
+  title: Pet Store
+  version: 1.0.0
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Response" }
+        "400":
+          description: bad request
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Exclude" }
+        default:
+          description: error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PetStoreClient" }
+components:
+  schemas:
+    Response:
+      type: object
+      properties:
+        name: { type: string }
+    Exclude:
+      type: object
+      properties:
+        reason: { type: string }
+    PetStoreClient:
+      type: object
+      properties:
+        code: { type: integer }

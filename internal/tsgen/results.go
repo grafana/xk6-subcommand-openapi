@@ -10,63 +10,127 @@ import (
 	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen/model"
 )
 
-// result declares the Result type of op: the union of a success and a failure variant,
-// whose data types are the unions of the data types of the documented responses.
-// The Result name is claimed before the response types, in discovery order.
+// result declares the Result type of op: the union of one variant per documented response,
+// each with its data type, the k6 response, and its status type, followed by the variant for status 0,
+// which k6 reports when it received no response. A responses key that is not a status code, a range,
+// or default is skipped with a warning.
+// The Result name is claimed first, then the names of the per-method status types,
+// then the names of the response types, in discovery order.
 func (o *operationMapper) result(op operation, typeName string) model.Named {
 	return o.types.declare(typeName+"Result", "the result of "+op.String(), "", func(string) model.Type {
 		responses := op.op.Responses.Map()
+		documented := make([]responseKey, 0, len(responses))
 
-		var success, failure []model.Type
+		for _, key := range sortedKeys(responses) {
+			k, ok := parseResponseKey(key)
+			if !ok {
+				o.warn(fmt.Sprintf("the response %q of %s has a key that is not a status code, a range, or default, "+
+					"and is skipped", key, op))
 
-		var defaultData model.Type
-
-		for _, status := range sortedKeys(responses) {
-			data := o.responseData(op, typeName, status, responses[status])
-
-			switch {
-			case isSuccess(status):
-				success = append(success, data)
-			case status == "default":
-				defaultData = data
-
-				fallthrough
-			default:
-				failure = append(failure, data)
+				continue
 			}
+
+			documented = append(documented, k)
 		}
 
-		if len(success) == 0 && defaultData != nil {
-			success = []model.Type{defaultData}
+		statuses := make([]model.Type, len(documented))
+		for i, k := range documented {
+			statuses[i] = o.statusType(op, typeName, k, documented)
 		}
 
-		return model.Union{variant(true, success), variant(false, failure)}
+		variants := make(model.Union, 0, len(documented)+1)
+		for i, k := range documented {
+			variants = append(variants, variant(o.responseData(op, typeName, k.key, responses[k.key]), statuses[i]))
+		}
+
+		return append(variants, variant(model.Undefined, model.Literal{Value: float64(0)}))
 	})
 }
 
-// variant returns a variant of a Result type with the union of data as its data type, or unknown if data is empty.
-func variant(ok bool, data []model.Type) model.Object {
-	typ := model.Type(model.Unknown)
-	if len(data) > 0 {
-		typ = union(data...)
-	}
+// responseKind is the kind of a documented responses key.
+type responseKind int
 
-	return model.Object{Properties: []model.Property{
-		{Name: "data", Type: typ},
-		{Name: "ok", Type: model.Literal{Value: ok}},
-		{Name: "response", Type: model.Response},
-	}}
+const (
+	statusCodeKey responseKind = iota + 1 // a status code from 100 to 599, such as 404
+	rangeKey                              // a range from 1XX to 5XX, such as 4XX
+	defaultKey                            // default
+)
+
+// responseKey is a documented responses key.
+type responseKey struct {
+	key   string
+	kind  responseKind
+	code  int // the status code, for a statusCodeKey
+	class int // the first digit of the range, for a rangeKey
 }
 
-// isSuccess reports whether the responses key status is the 2XX range or a status code from 200 to 299.
-func isSuccess(status string) bool {
-	if strings.EqualFold(status, "2XX") {
-		return true
+// parseResponseKey parses a responses key: three digits from 100 to 599, a range from 1XX to 5XX compared
+// case-insensitively, or default. It reports false for any other key.
+func parseResponseKey(key string) (responseKey, bool) {
+	if key == "default" {
+		return responseKey{key: key, kind: defaultKey}, true
 	}
 
-	code, err := strconv.Atoi(status)
+	if len(key) != 3 || key[0] < '1' || key[0] > '5' {
+		return responseKey{}, false
+	}
 
-	return err == nil && code >= 200 && code <= 299
+	if strings.EqualFold(key[1:], "XX") {
+		return responseKey{key: key, kind: rangeKey, class: int(key[0] - '0')}, true
+	}
+
+	// The first character is a digit, so Atoi accepts no sign and succeeds only for three digits.
+	code, err := strconv.Atoi(key)
+
+	return responseKey{key: key, kind: statusCodeKey, code: code}, err == nil
+}
+
+// statusType returns the status type of the documented response k of op: the number literal of a status code,
+// and for a range or default the shared status code type if the operation documents nothing that it excludes,
+// and otherwise a per-method type without the explicit codes of the range, or, for default, without all
+// other documented responses. documented are all documented responses of op in key order.
+func (o *operationMapper) statusType(
+	op operation, typeName string, k responseKey, documented []responseKey,
+) model.Type {
+	if k.kind == statusCodeKey {
+		return model.Literal{Value: float64(k.code)}
+	}
+
+	from, suffix := o.statusTypes.all, "StatusDefault"
+	if k.kind == rangeKey {
+		from, suffix = o.statusTypes.ranges[k.class-1], "Status"+strconv.Itoa(k.class)+"XX"
+	}
+
+	// A range excludes the status codes in it, and default excludes all other documented responses.
+	var excluded []model.Type
+
+	for _, other := range documented {
+		switch {
+		case other.kind == statusCodeKey && (k.kind == defaultKey || other.code/100 == k.class):
+			excluded = append(excluded, model.Literal{Value: float64(other.code)})
+		case other.kind == rangeKey && k.kind == defaultKey:
+			excluded = append(excluded, o.statusTypes.ranges[other.class-1])
+		}
+	}
+
+	if len(excluded) == 0 {
+		return from
+	}
+
+	what := fmt.Sprintf("the status type of the response %s of %s", k.key, op)
+
+	return o.types.declare(typeName+suffix, what, "", func(string) model.Type {
+		return model.Exclude{From: from, Excluded: union(excluded...)}
+	})
+}
+
+// variant returns a variant of a Result type with the given data and status types.
+func variant(data, status model.Type) model.Object {
+	return model.Object{Properties: []model.Property{
+		{Name: "data", Type: data},
+		{Name: "response", Type: model.Response},
+		{Name: "status", Type: status},
+	}}
 }
 
 // responseData returns the data type of the response documented for status: undefined if it has no content,

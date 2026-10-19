@@ -50,3 +50,5 @@ Run `openspec validate <change-name> --strict` and make sure it passes.
 ## Before opening an impl PR
 
 Run `make lint`. It uses the same golangci-lint configuration as k6 itself.
+
+Run `make typecheck`. It type-checks the generated client libraries with TypeScript and needs Node.js.

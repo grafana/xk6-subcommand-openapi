@@ -35,6 +35,8 @@ func typeExpr(t model.Type, indent int) string {
 		return join(t, " | ", indent, func(model.Type) bool { return false })
 	case model.Intersection:
 		return join(t, " & ", indent, func(m model.Type) bool { _, ok := m.(model.Union); return ok })
+	case model.Exclude:
+		return "Exclude<" + typeExpr(t.From, indent) + ", " + typeExpr(t.Excluded, indent) + ">"
 	case model.Object:
 		return object(t, indent)
 	default:

@@ -135,6 +135,13 @@ func newNameRegistry(kind string, warn func(string)) *nameRegistry {
 	return &nameRegistry{kind: kind, used: make(map[string]bool), warn: warn}
 }
 
+// reserve marks names as taken without reporting a warning, so claim gives them a numeric suffix.
+func (r *nameRegistry) reserve(names ...string) {
+	for _, name := range names {
+		r.used[name] = true
+	}
+}
+
 // claim reserves name and returns it, or, if it is already taken, reserves and returns name followed by
 // the lowest free numeric suffix from 2 on, and reports a warning that names what the name is for.
 func (r *nameRegistry) claim(name, what string) string {
