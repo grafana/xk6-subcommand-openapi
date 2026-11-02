@@ -43,13 +43,12 @@ it:
 typecheck:
 	cd test/typecheck && npm ci --no-audit --no-fund && npx tsc -p .
 
-# xk6 lint's versions check requires a vX.Y.Z git tag; re-enable it once the first release is tagged.
 ## lint: Run golangci-lint with the k6-ci config plus .golangci.patch, then xk6 lint.
 .PHONY: lint
 lint: $(LINT_FINAL)
 	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$$(head -n 1 $(LINT_BASE) | tr -d '# ') \
 	  run --config=$(LINT_FINAL) ./...
-	xk6 lint --disable versions
+	xk6 lint
 
 ## format: Format the Go sources.
 .PHONY: format

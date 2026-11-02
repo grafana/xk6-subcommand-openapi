@@ -46,7 +46,7 @@ Run `make` (or `make help`) to list the targets.
 | `make test` | Run the Go tests. |
 | `make it` | Run the integration test against a real k6 binary built with xk6. |
 | `make typecheck` | Type-check the generated client libraries and the example with TypeScript, including the narrowing assertions in `test/typecheck`; needs Node.js. |
-| `make lint` | Run golangci-lint with the [grafana/k6-ci](https://github.com/grafana/k6-ci) config plus `.golangci.patch`, then `xk6 lint` without its `versions` check. |
+| `make lint` | Run golangci-lint with the [grafana/k6-ci](https://github.com/grafana/k6-ci) config plus `.golangci.patch`, then `xk6 lint`. |
 | `make format` | Format the Go sources. |
 | `make update-lint-patch` | Regenerate `.golangci.patch` from a locally edited `build/lint/.golangci.yml`. |
 | `make clean` | Remove build output. |
