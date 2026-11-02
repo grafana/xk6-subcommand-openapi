@@ -1,154 +1,64 @@
 # xk6-subcommand-openapi
 
-**Generate a k6 client library from an OpenAPI descriptor, as a native `k6` subcommand.**
+**Generate a typed k6 client library from an OpenAPI descriptor, with a native `k6` subcommand.**
 
-This is a `k6` extension that will add a subcommand for generating a k6 test client library from an OpenAPI descriptor. It is implemented in Go, so it runs as part of a `k6` binary with no Node.js dependency. The goal is similar to [`grafana/openapi-to-k6`](https://github.com/grafana/openapi-to-k6), but this is a new, independent implementation, not a port. It does not aim for output or API compatibility with openapi-to-k6's generated code.
+`k6 x openapi` turns an OpenAPI 3.x descriptor into a TypeScript module with one method per operation, which k6 test scripts import and run without a build step.
+It runs inside the `k6` binary, with no Node.js dependency.
+It is independent of [`grafana/openapi-to-k6`](https://github.com/grafana/openapi-to-k6) and generates a different client.
 
-## Status
+## Installation
 
-Early stage.
-The subcommand generates a typed k6 client library from an OpenAPI 3.x descriptor.
-Development follows a spec-first process: a change is proposed, reviewed, and only then implemented.
-Proposals and specs live under [`openspec/`](openspec/).
-See [AGENTS.md](AGENTS.md) for the guardrails this implies.
-
-## Usage
+The extension requires k6 v2.3.0 or newer.
+Download a k6 binary with the extension from the [releases](https://github.com/grafana/xk6-subcommand-openapi/releases), or build one with [xk6](https://github.com/grafana/xk6):
 
 ```sh
-k6 x openapi <openapi-spec> [--example] [--out <file>]
+xk6 build --with github.com/grafana/xk6-subcommand-openapi@latest
 ```
 
-`<openapi-spec>` is the location of the OpenAPI descriptor: a local file path, or an `http` or `https` URL.
-A relative path is resolved against the current directory.
-The descriptor can be JSON or YAML.
-External `$ref`s are resolved relative to the document that contains them, whether they point to a local file or a URL.
+## Quick start
 
-OpenAPI 3.0, 3.1, and 3.2 descriptors are supported.
-Swagger 2.0 descriptors are not supported and fail with an error; convert them to OpenAPI 3 first.
-Descriptor features that the client does not represent are ignored.
-
-| Flag | Description |
-|------|-------------|
-| `--example` | Append a k6 test script that constructs the client to the client library, so the output is a runnable k6 script. |
-| `-o`, `--out <file>` | Write the output to `<file>` instead of stdout. |
-
-The output is written to stdout by default.
-With `--out`, nothing is written to stdout, and an existing file is overwritten.
-The `--out` file must have a `.ts` extension, because k6 selects TypeScript handling by file extension.
-Its parent directory must exist; missing directories are not created.
-
-When redirecting stdout, also use a `.ts` file.
-Prefer `--out` for writing files: shell redirection empties the target file even if the command fails, while `--out` writes nothing on error.
-
-### Warnings
-
-A descriptor that loads but fails OpenAPI validation still generates a client.
-Each validation error is logged as a warning through k6's logger, and so is each descriptor construct that the client skips or approximates, such as a cookie parameter or a renamed type.
-Warnings never reach the `--out` file, and reach stdout only with `--log-output=stdout`.
-
-### Example script
-
-With `--example`, the output ends with an `async` default function that constructs the client and calls no operation:
-
-```ts
-export default async function (): Promise<void> {
-  const client = new PetStoreClient({ baseUrl: "https://petstore.example.test/v1" });
-  // Call the client's methods with await, for example: const result = await client.<method>(...);
-}
-```
-
-The base URL is the descriptor's first server URL, with server variables replaced by their defaults, if it is an absolute `http` or `https` URL, and `http://localhost` otherwise.
+Generate a runnable script from a descriptor and run it:
 
 ```sh
 k6 x openapi api.yaml --example --out script.ts
 k6 run script.ts
 ```
 
-### Running locally without a build
+The script constructs the client and calls no operation yet.
+Add calls to its default function, or generate only the client library and import it from your own script, as described in [Using the client](#using-the-client).
+The [`examples`](examples/) directory contains a complete example against the QuickPizza demo application.
 
-During development, [`xk6 x`](https://github.com/grafana/xk6) builds a temporary k6 binary with the extension in the current directory and runs the subcommand with it.
-Use `--` to separate xk6 flags from the subcommand's arguments:
+## Command
 
 ```sh
-xk6 x -- openapi api.yaml --example
+k6 x openapi <openapi-spec> [--example] [--out <file>]
 ```
 
-## The generated client
+`<openapi-spec>` is a local file path, relative to the current directory, or an `http` or `https` URL.
+The descriptor can be JSON or YAML, in OpenAPI 3.0, 3.1, or 3.2.
+Swagger 2.0 is not supported; convert it to OpenAPI 3 first.
+External `$ref`s are resolved relative to the document that contains them.
 
-The client library is a single TypeScript module that k6 runs without a build step.
-It exports one type for each schema the operations use, the options and result types of each method, the status code types, and one client class named after `info.title`, such as `PetStoreClient`.
-A generated type that would get a name the client library reserves gets a numeric suffix, such as `Response2` for a schema named `Response`, and the subcommand logs a warning.
-These names are `ArrayBuffer`, `Exclude`, `FileData`, `FormData`, `Params`, `Promise`, `Record`, `Response`, `URL`, `URLSearchParams`, the client class name, and the names of the status code types.
+| Flag | Description |
+|------|-------------|
+| `--example` | Append a k6 default function that constructs the client, so the output is a runnable script. |
+| `-o`, `--out <file>` | Write the output to `<file>` instead of stdout. The file must have a `.ts` extension, and its directory must exist. |
 
-For this descriptor excerpt:
+With `--example`, the client's base URL is the descriptor's first server URL, with server variables set to their defaults, if that is an absolute `http` or `https` URL, and `http://localhost` otherwise.
 
-```yaml
-openapi: 3.0.3
-info: { title: Pet Store, version: 1.0.0 }
-paths:
-  /pets:
-    get:
-      operationId: listPets
-      parameters:
-        - { name: limit, in: query, schema: { type: integer } }
-      responses:
-        "200":
-          description: The pets.
-          content:
-            application/json:
-              schema: { type: array, items: { $ref: "#/components/schemas/Pet" } }
-    post:
-      operationId: createPet
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/Pet" }
-      responses:
-        "201":
-          description: Created.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Pet" }
-  /pets/{petId}:
-    get:
-      operationId: getPet
-      parameters:
-        - { name: petId, in: path, required: true, schema: { type: integer } }
-      responses:
-        "200":
-          description: The pet.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Pet" }
-        "404":
-          description: Not found.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Error" }
-components:
-  schemas:
-    Pet:
-      type: object
-      required: [name]
-      properties:
-        id: { type: integer }
-        name: { type: string }
-    Error:
-      type: object
-      properties:
-        message: { type: string }
-```
+Prefer `--out` over shell redirection: it overwrites the file only if generation succeeds, while redirection empties it even on failure.
+When redirecting stdout, also use a `.ts` file, because k6 handles a file as TypeScript by its extension.
 
-the client has these methods:
+### Warnings
 
-```ts
-listPets(options?: ListPetsOptions): Promise<ListPetsResult>
-createPet(options: CreatePetOptions): Promise<CreatePetResult>
-getPet(petId: number, options?: GetPetOptions): Promise<GetPetResult>
-```
+A descriptor that fails OpenAPI validation still generates a client, and each validation error is logged as a warning.
+So is each descriptor construct that the client skips or approximates, such as a cookie parameter, or a schema renamed because its name clashes with one the client uses, such as `Response` becoming `Response2`.
+Warnings go to k6's log on stderr and never into the `--out` file.
 
-Generate the client into `client.ts` with `k6 x openapi api.yaml --out client.ts` and use it from a test script:
+## Using the client
+
+The client library exports a client class named after the descriptor's `info.title`, such as `PetStoreClient`, and types for the schemas, options, and results of the operations.
+For a descriptor with the operations `listPets`, `createPet`, and `getPet`, where `getPet` documents a `200` response with a `Pet` and a `404` response with an `Error`, generate the client with `k6 x openapi api.yaml --out client.ts` and use it like this:
 
 ```ts
 import { check } from "k6";
@@ -162,9 +72,6 @@ const client = new PetStoreClient({
 export default async function () {
   const created = await client.createPet({ body: { name: "Rex" } });
   check(created, { "pet created": (res) => res.status === 201 });
-  if (created.status === 201) {
-    console.log(created.data.id); // created.data is a Pet
-  }
 
   const res = await client.getPet(1, { k6Params: { tags: { name: "getPet" } } });
   switch (res.status) {
@@ -190,124 +97,72 @@ export default async function () {
 
 ### Constructor
 
-The constructor takes the required `baseUrl` and optional `commonK6Params`, the k6 [`Params`](https://grafana.com/docs/k6/latest/javascript-api/k6-http/params/) for every request.
-Trailing slashes are removed from `baseUrl`.
+The constructor takes the required `baseUrl`, whose trailing slashes are removed, and optional `commonK6Params`, the k6 [`Params`](https://grafana.com/docs/k6/latest/javascript-api/k6-http/params/) for every request.
 
 ### Methods
 
-There is one method per operation, named after its `operationId` in camelCase, or after the HTTP method and the path, such as `getPetsPetId`.
-Every method is `async`: it sends its request with k6's non-blocking `http.asyncRequest` and returns a promise, so always `await` it.
-Several calls can run concurrently with `Promise.all`.
+There is one method per operation, named after its `operationId` in camelCase, or after the HTTP method and path, such as `getPetsPetId`.
+Every method is `async` and sends its request with k6's non-blocking `http.asyncRequest`, so always `await` it; run calls concurrently with `Promise.all`.
 
-A method takes the path parameters as positional arguments, in path order, followed by an `options` object with these members:
+A method takes the path parameters as positional arguments, in path order, followed by an `options` object:
 
-- `query`: the query parameters, sent as a query string, with one `name=value` pair per array element.
-  An object is flattened into one pair per property, named after the property, as OpenAPI's default `style: form` with `explode: true` defines, so `{ filter: { color: "red", tags: ["a", "b"] } }` is sent as `color=red&tags=a&tags=b`.
-  Objects and arrays inside an array or an object property, such as `{ owners: [{ name: "Ann" }] }` or `{ filter: { owner: { name: "Ann" } } }`, are not supported and are omitted; the subcommand logs a warning for each query parameter whose schema allows one.
+- `query`: the query parameters.
+  An array becomes one `name=value` pair per element, and an object one pair per property, so `{ filter: { color: "red", tags: ["a", "b"] } }` is sent as `color=red&tags=a&tags=b`.
+  Objects and arrays nested inside an array or an object are omitted, with a warning at generation time.
 - `headers`: the header parameters.
-- `body`: the request body, encoded according to its media type: JSON with `JSON.stringify`, `application/x-www-form-urlencoded` by the same rules as the query string, with a warning for each field, and for the additional fields, that allow nested values, `multipart/form-data` as a multipart body whose file fields take `http.file(...)` or an `ArrayBuffer`, and any other media type sent unchanged as a `string` or `ArrayBuffer`.
-- `k6Params`: k6 `Params` for this request, merged over `commonK6Params`; `headers`, `cookies`, and `tags` are merged key by key.
+- `body`: the request body, encoded by its media type:
+  - `application/json` and other JSON media types: with `JSON.stringify`.
+  - `application/x-www-form-urlencoded`: by the same rules as `query`.
+  - `multipart/form-data`: as a multipart body; file fields take `http.file(...)` or an `ArrayBuffer`.
+  - any other media type: sent unchanged, as a `string` or an `ArrayBuffer`.
+- `k6Params`: k6 `Params` for this request, merged over `commonK6Params`, with `headers`, `cookies`, and `tags` merged key by key.
 
-A member is required only if the descriptor marks a parameter or the request body as required, and `options` itself is optional if all its members are.
+A member is required only if the descriptor marks the parameter or request body as required, and `options` is optional if all its members are.
 
-### Result
+### Results
 
-A method's promise resolves to `{ status, data, response }`:
+A method resolves to `{ status, data, response }`:
 
-- `status` is the HTTP status code of the response, or 0 if k6 received no response, such as on a timeout, a refused connection, or a DNS or TLS failure.
-- `data` is the response body decoded according to the response's `Content-Type` header: parsed as JSON for `application/json` and media types ending in `+json`, and the unparsed body for any other or a missing `Content-Type`; it is `undefined` for an empty body.
-- `response` is the k6 [`Response`](https://grafana.com/docs/k6/latest/javascript-api/k6-http/response/).
+- `status`: the HTTP status code, or `0` if k6 received no response, such as on a timeout or a connection, DNS, or TLS failure.
+- `data`: the body, parsed for a JSON `Content-Type` and unparsed otherwise, or `undefined` if it is empty.
+- `response`: the k6 [`Response`](https://grafana.com/docs/k6/latest/javascript-api/k6-http/response/).
 
-If a body whose `Content-Type` says JSON is not valid JSON, the promise rejects with the parse error.
-If a request fails and the k6 `throw` option is set, the promise rejects with k6's error.
+The promise rejects if a JSON body does not parse, or if a request fails while the k6 `throw` option is set.
 
-The result type, such as `GetPetResult`, is a union with one variant for each documented response and one for status 0, whose `data` is `undefined`.
-Checking `status` with `if` or `switch`, as in the example above, narrows `data` to the type documented for that status.
-The type of `status` in a variant is:
+The result type has one variant per documented response, plus one for status `0`.
+Checking `status` with `if` or `switch` narrows `data` to the type documented for that status.
+`expect(res.status).toBe(200)` does not narrow, because `expect` is not a TypeScript assertion function.
+A range such as `4XX` has the status type `HttpStatus4XX`, and `default` has `HttpStatusAll`.
+If other documented responses overlap them, the type is named after the method instead, such as `GetPetStatus4XX` or `GetPetStatusDefault`, and excludes the codes those responses cover.
 
-- an explicit code, such as `404`: the code itself.
-- a range, such as `4XX`: the exported type `HttpStatus4XX`, the codes from 400 to 499.
-  If the operation also documents codes in that range, a type named after the method instead, such as `GetPetStatus4XX`, the range without those codes.
-- `default`: the exported type `HttpStatusAll`, the codes from 100 to 599.
-  Next to other responses, a type named after the method instead, such as `GetPetStatusDefault`, the codes that no other documented response covers.
+The types describe documented responses only.
+An undocumented response, such as a gateway error page, still arrives, with its actual `status` and `data`.
+To check for one, compare `res.response.status`, a plain `number`, because editors flag `res.status === 503` as never true if the operation documents neither `503`, `5XX`, nor `default`.
+For the same reason, the `default` branch of a `switch` over the documented codes has the type `never`.
+A response with another `Content-Type` than documented gets `data` decoded as above, which may not match its type.
 
-To check for success, compare `status` with the expected code, such as `res.status === 201`, and for an operation with several success responses, list them, such as `res.status === 200 || res.status === 202`.
-Assertions such as `expect(res.status).toBe(200)` check the value but do not narrow `data`, because `expect` is not a TypeScript assertion function; use `if` or `switch` to narrow.
+### Credentials
 
-The result type describes documented responses only; for an undocumented response, such as a gateway error page, `status` and `data` hold the actual values outside the type.
-Editors therefore report a comparison such as `res.status === 503`, for an operation that documents neither `503`, `5XX`, nor `default`, as a comparison that never matches; compare `res.response.status`, a plain `number`, instead.
-For the same reason, the `default` branch of a `switch` over the documented codes types the result as `never`, although such a response can occur.
-For a response with another `Content-Type` than documented, `data` holds whatever the decoding above produces, which may not match its type.
+The client ignores the descriptor's security schemes and sends no credentials on its own.
+Send them with `commonK6Params` for every request, or with `k6Params` for one:
 
-### Credentials and security schemes
-
-The descriptor's security schemes and requirements are ignored, and the client sends no credentials on its own.
-Send credentials through `commonK6Params` for every request, or through `k6Params` for one request:
-
-- `http` `basic` and `bearer`, and API keys in a header: set the header, such as `headers: { Authorization: "Bearer my-token" }`.
+- `basic` and `bearer` auth, and API keys in a header: set the header, such as `headers: { Authorization: "Bearer my-token" }`.
 - API keys in a cookie: set `cookies`.
 - `oauth2` and `openIdConnect`: obtain a token yourself and send it as a header.
-- `http` `digest`: put the percent-encoded credentials into `baseUrl`, as in `http://user:pass@host`, and set `auth: "digest"` in `commonK6Params`; k6 supports only the MD5 algorithm.
+- `digest` auth: put the percent-encoded credentials into `baseUrl`, as in `http://user:pass@host`, and set `auth: "digest"`; k6 supports only MD5.
 - `mutualTLS`: use k6's [`tlsAuth`](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#tls-auth) option.
 
-API keys in the query and `http` schemes other than `basic`, `bearer`, and `digest` cannot be sent yet.
-The subcommand logs a warning for each such scheme that an operation uses.
+API keys in the query and `http` schemes other than `basic`, `bearer`, and `digest` cannot be sent yet; the subcommand logs a warning for each such scheme that an operation uses.
 
-### Known limitations
+## Limitations
 
-- The client imports `URL`, `URLSearchParams`, and `FormData` from [jslib.k6.io](https://jslib.k6.io), so running a script that contains it needs network access to jslib.k6.io. A later change will remove this requirement.
-- Generating credential options from security schemes is not supported yet.
-- A method name can collide with a member that the client class declares itself, such as an operation named `constructor`, and the client library may then be invalid.
-
-## Development
-
-### Prerequisites
-
-- [Go](https://go.dev/doc/install), in the version required by `go.mod` or newer.
-- [xk6](https://github.com/grafana/xk6), used by `make build`, `make it`, and `make lint`.
-- [Node.js](https://nodejs.org/), used only by `make typecheck`.
-- [gosec](https://github.com/securego/gosec) and [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck), used by `xk6 lint` in `make lint`:
-
-  ```sh
-  go install github.com/securego/gosec/v2/cmd/gosec@latest
-  go install golang.org/x/vuln/cmd/govulncheck@latest
-  ```
-
-### Make targets
-
-Run `make` (or `make help`) to list the targets.
-
-| Target | Description |
-|--------|-------------|
-| `make help` | Show the list of targets. This is the default target. |
-| `make build` | Build `./k6` with this extension using xk6. |
-| `make test` | Run the Go tests. |
-| `make it` | Run the integration test against a real k6 binary built with xk6. |
-| `make typecheck` | Type-check the generated client libraries in `test/testdata` with TypeScript, including the narrowing assertions in `test/typecheck`; needs Node.js. |
-| `make lint` | Run golangci-lint with the [grafana/k6-ci](https://github.com/grafana/k6-ci) config plus `.golangci.patch`, then `xk6 lint` without its `versions` check. |
-| `make format` | Format the Go sources. |
-| `make update-lint-patch` | Regenerate `.golangci.patch` from a locally edited `build/lint/.golangci.yml`. |
-| `make clean` | Remove build output. |
-
-The k6-ci ref used by `make lint` is read from `.github/workflows/all.yml`, so local lint and CI use the same config.
-
-### Integration test
-
-`make it` runs [`test/it.sh`](test/it.sh), which builds `build/it/k6` with the extension using xk6 and checks the subcommand end to end.
-It checks that `k6 x --help` lists `openapi`, then generates every descriptor in [`test/testdata`](test/testdata/) with `--example --out` and runs each script with `k6 run`.
-A run fails if k6 exits with an error or logs one.
-The generated scripts import from jslib.k6.io, so `make it` needs network access.
-In CI, the `integration` workflow ([`.github/workflows/integration.yml`](.github/workflows/integration.yml)) runs `make it` with the latest xk6 and k6 releases.
-
-### Type check
-
-`make typecheck` installs the pinned TypeScript compiler and the k6 type definitions from [`test/typecheck/package.json`](test/typecheck/package.json) and type-checks every golden client library in [`test/testdata`](test/testdata/) in strict mode.
-It also type-checks the `*.check.ts` files in [`test/typecheck`](test/typecheck/), which assert that the result types narrow as specified: the check fails if a narrowed type differs from the expected one, or if a line marked with `@ts-expect-error` compiles.
-In CI, the `typecheck` workflow ([`.github/workflows/typecheck.yml`](.github/workflows/typecheck.yml)) runs `make typecheck`.
+- The client imports `URL`, `URLSearchParams`, and `FormData` from [jslib.k6.io](https://jslib.k6.io), so running it needs network access to jslib.k6.io.
+- Security schemes do not generate credential options.
+- An operation whose method name clashes with a member of the client class, such as `constructor`, makes the client library invalid.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how a change gets proposed, reviewed, and implemented.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to propose a change and for the development setup.
 
 ## License
 

@@ -1,0 +1,23 @@
+# Release: on a vX.Y.Z tag push, the shared grafana/xk6 workflow scans the code with gosec and govulncheck,
+# builds k6 with this extension at the tag for each os/arch, and creates the GitHub release with the archives.
+# It does not run the tests, so tag only a commit whose CI, integration, and typecheck runs passed.
+name: release
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    uses: grafana/xk6/.github/workflows/extension-release.yml@971105042f8d3aaedd9a6b3e6b46561f92910eb3 # v1.4.15
+    permissions:
+      contents: write
+    with:
+      # Keep k6-version in line with go.k6.io/k6/v2 in go.mod, and go-version with the go directive there.
+      k6-version: "v2.3.0"
+      xk6-version: "1.4.15"
+      go-version: "1.26.x"
+      os: '["linux","darwin","windows"]'
+      arch: '["amd64","arm64"]'

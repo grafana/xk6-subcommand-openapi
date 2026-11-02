@@ -12,7 +12,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen/model"
+	"github.com/grafana/xk6-subcommand-openapi/internal/tsgen/model"
 )
 
 // operation is an operation of the descriptor with the path and path item it belongs to.

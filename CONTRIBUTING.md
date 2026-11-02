@@ -2,53 +2,68 @@
 
 Participation in this project is governed by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
-This project follows spec-driven development, using [OpenSpec](https://github.com/Fission-AI/OpenSpec). No implementation code is added until a spec exists and is approved for that piece of work. That's not a formality: it means the team agrees on what's being built and how before anyone writes code. Design gets reviewed first, while it's still cheap and easy to reason about, rather than only surfacing problems once a full implementation already exists.
+## Proposing a change
 
-Security fixes, and bug fixes that just correct an implementation defect against an already-approved spec (no new design decision involved), are exceptions: they can skip the proposal step and land as a single PR.
+For a bug fix or a small improvement, open a pull request directly.
+For a new feature or a change to the generated client's API, open an issue first, so the design can be agreed on before you write code.
 
-## Starting a change
+## Before opening a pull request
 
-Specs and changes live under `openspec/`. Start a change with:
+Run `make test`, `make it`, `make lint`, and `make typecheck`, as described in [Development](#development), and make sure they pass.
+Update [README.md](README.md) if the change affects how the command or the generated client is used.
 
-- `/opsx:propose` in Claude Code
-- `$openspec-propose` in Codex
-- `/opsx-propose` in GitHub Copilot
+## Development
 
-This generates a proposal, a design doc, a task list, and a delta spec under `openspec/changes/<name>/`. Project context shown to these tools while drafting a proposal lives in `openspec/config.yaml`.
+### Prerequisites
 
-## Two PRs per change
+- [Go](https://go.dev/doc/install), in the version required by `go.mod` or newer.
+- [xk6](https://github.com/grafana/xk6), used by `make build`, `make it`, and `make lint`.
+- [Node.js](https://nodejs.org/), used only by `make typecheck`.
+- [gosec](https://github.com/securego/gosec) and [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck), used by `xk6 lint` in `make lint`:
 
-Each change is delivered as two separate PRs, not one:
+  ```sh
+  go install github.com/securego/gosec/v2/cmd/gosec@latest
+  go install golang.org/x/vuln/cmd/govulncheck@latest
+  ```
 
-1. A proposal PR: the spec only, no code. Once this is reviewed and merged, the design is agreed on.
-2. An impl PR: the actual code, following the approved proposal's tasks. Once all tasks are done, this PR also runs the archive step (moving the change into `openspec/changes/archive/` and syncing `openspec/specs/`), as its last action before merging. Archive is not a third PR.
+### Running the subcommand without a build
 
-The proposal PR should reference its issue without a closing keyword (for example "Part of #123"), so merging it doesn't close the issue early. Only the impl PR, the one that actually finishes the change, should use a closing keyword ("Closes #123").
+[`xk6 x`](https://github.com/grafana/xk6) builds a temporary k6 binary with the extension in the current directory and runs the subcommand with it.
+Use `--` to separate xk6 flags from the subcommand's arguments:
 
-## Status tracking
+```sh
+xk6 x -- openapi api.yaml --example
+```
 
-Because of the two-PR split, a change moves through several stages before it's actually done:
+### Make targets
 
-- `planned`: not started yet.
-- `proposal: in progress`: the proposal is being written.
-- `proposal: PR open`: the proposal PR is open for review.
-- `proposal: PR merged`: the proposal PR has merged. Impl hasn't started yet.
-- `impl: in progress`: code is being written.
-- `impl: PR open`: the impl PR is open for review.
-- `impl: PR merged`: the impl PR has merged and the change is archived. This is the only state that counts as done.
+Run `make` (or `make help`) to list the targets.
 
-These same names work as GitHub labels. Once a specific change's work starts, its line in the roadmap issue can be converted into its own sub-issue (a native GitHub feature), labeled with whichever state applies, instead of relying on hand-edited status text.
+| Target | Description |
+|--------|-------------|
+| `make help` | Show the list of targets. This is the default target. |
+| `make build` | Build `./k6` with this extension using xk6. |
+| `make test` | Run the Go tests. |
+| `make it` | Run the integration test against a real k6 binary built with xk6. |
+| `make typecheck` | Type-check the generated client libraries and the example with TypeScript, including the narrowing assertions in `test/typecheck`; needs Node.js. |
+| `make lint` | Run golangci-lint with the [grafana/k6-ci](https://github.com/grafana/k6-ci) config plus `.golangci.patch`, then `xk6 lint` without its `versions` check. |
+| `make format` | Format the Go sources. |
+| `make update-lint-patch` | Regenerate `.golangci.patch` from a locally edited `build/lint/.golangci.yml`. |
+| `make clean` | Remove build output. |
 
-Changes are often stacked: a later one's branch can start before an earlier one has merged, to avoid waiting. So there's no fixed moment to update a change's status. Whoever notices a change move to a new stage updates it then, no schedule needed.
+The k6-ci ref used by `make lint` is read from `.github/workflows/all.yml`, so local lint and CI use the same config.
 
-Planned and in-progress work is tracked in a pinned issue in this repo (see the [Issues tab](https://github.com/grafana-experimental/xk6-subcommand-openapi/issues)).
+### Integration test
 
-## Before opening a proposal PR
+`make it` runs [`test/it.sh`](test/it.sh), which builds `build/it/k6` with the extension using xk6 and checks the subcommand end to end.
+It checks that `k6 x --help` lists `openapi`, then generates every descriptor in [`test/testdata`](test/testdata/) with `--example --out` and runs each script with `k6 run`.
+A run fails if k6 exits with an error or logs one.
+It then checks that [`examples/quickpizza-client.ts`](examples/quickpizza-client.ts) matches a fresh generation.
+The generated scripts import from jslib.k6.io, so `make it` needs network access.
+In CI, the `integration` workflow ([`.github/workflows/integration.yml`](.github/workflows/integration.yml)) runs `make it` with the latest xk6 and k6 releases.
 
-Run `openspec validate <change-name> --strict` and make sure it passes.
+### Type check
 
-## Before opening an impl PR
-
-Run `make lint`. It uses the same golangci-lint configuration as k6 itself.
-
-Run `make typecheck`. It type-checks the generated client libraries with TypeScript and needs Node.js.
+`make typecheck` installs the pinned TypeScript compiler and the k6 type definitions from [`test/typecheck/package.json`](test/typecheck/package.json) and type-checks every golden client library in [`test/testdata`](test/testdata/) in strict mode.
+It also type-checks the [example](examples/) and the `*.check.ts` files in [`test/typecheck`](test/typecheck/), which assert that the result types narrow as specified: the check fails if a narrowed type differs from the expected one, or if a line marked with `@ts-expect-error` compiles.
+In CI, the `typecheck` workflow ([`.github/workflows/typecheck.yml`](.github/workflows/typecheck.yml)) runs `make typecheck`.

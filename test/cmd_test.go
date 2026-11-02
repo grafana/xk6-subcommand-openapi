@@ -13,7 +13,7 @@ import (
 	"go.k6.io/k6/v2/cmd/tests"
 	"go.k6.io/k6/v2/lib/fsext"
 
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/command"
+	"github.com/grafana/xk6-subcommand-openapi/internal/command"
 )
 
 // apiYAML is the name of the descriptor file most tests generate from.

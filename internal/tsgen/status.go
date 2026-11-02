@@ -3,7 +3,7 @@ package tsgen
 import (
 	"fmt"
 
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen/model"
+	"github.com/grafana/xk6-subcommand-openapi/internal/tsgen/model"
 )
 
 // statusTypes references the shared status code types of the client library.

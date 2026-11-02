@@ -1,4 +1,4 @@
-module github.com/grafana-experimental/xk6-subcommand-openapi
+module github.com/grafana/xk6-subcommand-openapi
 
 go 1.26.0
 

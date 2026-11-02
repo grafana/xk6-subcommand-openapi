@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen/model"
+	"github.com/grafana/xk6-subcommand-openapi/internal/tsgen/model"
 )
 
 // nested reports whether a query parameter or URL-encoded body field of type t, or a part of it, allows a nested

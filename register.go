@@ -3,7 +3,7 @@
 package openapi
 
 import (
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/command"
+	"github.com/grafana/xk6-subcommand-openapi/internal/command"
 	"go.k6.io/k6/v2/subcommand"
 )
 

@@ -1,4 +1,5 @@
-// Type-checks the generated client libraries in ../testdata and the assertions in *.check.ts; see `make typecheck`.
+// Type-checks the generated client libraries in ../testdata, the assertions in *.check.ts, and the example in ../../examples;
+// see `make typecheck`.
 {
   "compilerOptions": {
     "strict": true,
@@ -8,7 +9,7 @@
     "module": "preserve",
     "allowImportingTsExtensions": true,
     // The client libraries are outside this directory, so they would not find node_modules/@types/k6 on their own.
-    "paths": { "k6/*": ["./node_modules/@types/k6/*"] }
+    "paths": { "k6": ["./node_modules/@types/k6"], "k6/*": ["./node_modules/@types/k6/*"] }
   },
-  "include": ["jslib.d.ts", "*.check.ts", "../testdata/**/*_client.ts"]
+  "include": ["jslib.d.ts", "*.check.ts", "../testdata/**/*_client.ts", "../../examples/*.ts"]
 }

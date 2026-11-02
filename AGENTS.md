@@ -16,7 +16,7 @@ This project follows spec-driven development. Do not add implementation Go code 
 
 Specs and changes live under `openspec/`. Start a change with `/opsx:propose` (Claude Code), `$openspec-propose` (Codex), or `/opsx-propose` (GitHub Copilot). Once a proposal is approved, implement it with the matching apply command. Project context shown to these tools lives in `openspec/config.yaml`.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full PR structure and status tracking.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup and the checks a pull request must pass.
 
 ## Checks before a Go change is done
 

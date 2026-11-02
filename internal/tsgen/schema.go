@@ -9,7 +9,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen/model"
+	"github.com/grafana/xk6-subcommand-openapi/internal/tsgen/model"
 )
 
 // schemaCtx is where a schema is mapped.
