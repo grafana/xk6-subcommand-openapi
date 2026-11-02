@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen/model"
+	"github.com/grafana/xk6-subcommand-openapi/internal/tsgen/model"
 )
 
 // identifierPattern matches the names that can be written as unquoted property names.

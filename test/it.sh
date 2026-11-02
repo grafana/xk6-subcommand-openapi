@@ -58,4 +58,15 @@ for fixture in $cases; do
 	fi
 done
 
+# The example in examples/ commits its generated client, so check that it is up to date.
+# The example script is not run, because it needs the public QuickPizza server; make typecheck checks it.
+examples=examples
+client="$dir/quickpizza-client.ts"
+
+step "k6 x openapi $examples/quickpizza.yaml matches $examples/quickpizza-client.ts"
+out=$("$k6" x openapi "$examples/quickpizza.yaml" --out "$client" 2>&1) ||
+	fail "k6 x openapi $examples/quickpizza.yaml exited with $?" "$out"
+cmp -s "$client" "$examples/quickpizza-client.ts" ||
+	fail "$examples/quickpizza-client.ts is outdated; regenerate it as described in $examples/README.md"
+
 step "PASS"

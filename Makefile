@@ -1,7 +1,7 @@
 SHELL       := bash
 .SHELLFLAGS := -e -o pipefail -c
 
-MODULE := github.com/grafana-experimental/xk6-subcommand-openapi
+MODULE := github.com/grafana/xk6-subcommand-openapi
 
 # The grafana/k6-ci ref is read from the CI workflow, so CI and local lint use the same config.
 WORKFLOW  ?= .github/workflows/all.yml

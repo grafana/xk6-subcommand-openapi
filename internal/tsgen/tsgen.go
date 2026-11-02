@@ -11,8 +11,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen/model"
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen/render"
+	"github.com/grafana/xk6-subcommand-openapi/internal/tsgen/model"
+	"github.com/grafana/xk6-subcommand-openapi/internal/tsgen/render"
 )
 
 // Options are the settings of a generation run.

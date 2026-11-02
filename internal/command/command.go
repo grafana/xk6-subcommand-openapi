@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 	"go.k6.io/k6/v2/cmd/state"
 
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/descriptor"
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen"
+	"github.com/grafana/xk6-subcommand-openapi/internal/descriptor"
+	"github.com/grafana/xk6-subcommand-openapi/internal/tsgen"
 )
 
 //go:embed help.md

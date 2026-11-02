@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/grafana-experimental/xk6-subcommand-openapi/internal/tsgen/model"
+	"github.com/grafana/xk6-subcommand-openapi/internal/tsgen/model"
 )
 
 //go:embed templates/*.tmpl
